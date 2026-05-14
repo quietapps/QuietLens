@@ -18,9 +18,17 @@ cask "focuslens" do
 
   app "FocusLens.app"
 
-  # Build is not signed with an Apple Developer ID. Install with:
-  #   brew install --cask --no-quarantine focuslens
-  # The --no-quarantine flag is required so Gatekeeper does not block launch.
+  # Build is not signed with an Apple Developer ID. Strip the quarantine
+  # extended attribute after install so Gatekeeper does not block launch.
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-dr", "com.apple.quarantine", "#{appdir}/FocusLens.app"],
+                   sudo: false
+  end
+
+  uninstall_postflight do
+    # nothing — app removal handled by Homebrew
+  end
 
   zap trash: [
     "~/Library/Preferences/com.parththummar.FocusLens.plist",
@@ -31,8 +39,8 @@ cask "focuslens" do
   ]
 
   caveats <<~EOS
-    FocusLens is currently distributed unsigned. Install with:
-      brew install --cask --no-quarantine focuslens
+    FocusLens is currently distributed unsigned. The quarantine attribute
+    is stripped automatically after install so Gatekeeper does not block it.
 
     FocusLens needs Accessibility access to detect which window is focused.
     On first launch, grant access in System Settings → Privacy & Security → Accessibility.

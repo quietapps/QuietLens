@@ -75,10 +75,10 @@ Inspired by [Monocle](https://iamdk.gumroad.com/l/monocle-elegant-macos-window-b
 
 ```bash
 brew tap parththummar/focuslens
-brew install --cask --no-quarantine focuslens
+brew install --cask focuslens
 ```
 
-`--no-quarantine` is required so macOS doesn't block the unsigned app. The tap is community-maintained at [parththummar/homebrew-focuslens](https://github.com/parththummar/homebrew-focuslens).
+The cask strips the macOS quarantine attribute on install so Gatekeeper does not block launch (the build is currently unsigned). The tap is community-maintained at [parththummar/homebrew-focuslens](https://github.com/parththummar/homebrew-focuslens).
 
 ### Direct download
 
