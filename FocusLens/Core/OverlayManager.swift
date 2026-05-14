@@ -172,6 +172,8 @@ final class OverlayManager {
         for d in arr {
             let layer = (d[kCGWindowLayer as String] as? Int) ?? 0
             if layer > 0 { continue }
+            let onScreen = (d[kCGWindowIsOnscreen as String] as? Bool) ?? true
+            if !onScreen { continue }
             guard let pid = d[kCGWindowOwnerPID as String] as? pid_t else { continue }
             guard let b = d[kCGWindowBounds as String] as? [String: Any],
                   let r = CGRect(dictionaryRepresentation: b as CFDictionary) else { continue }

@@ -15,8 +15,9 @@ final class BlurOverlayView: NSView {
         layer?.masksToBounds = true
         effect.autoresizingMask = [.width, .height]
         effect.blendingMode = .behindWindow
-        effect.material = .underWindowBackground
+        effect.material = .windowBackground
         effect.state = .active
+        effect.appearance = NSAppearance(named: .darkAqua)
         addSubview(effect)
         tintLayer.frame = bounds
         gradientLayer.frame = bounds
@@ -51,10 +52,9 @@ final class BlurOverlayView: NSView {
         } else {
             effect.isHidden = false
             switch radius {
-            case ..<10: effect.material = .hudWindow
-            case ..<25: effect.material = .underWindowBackground
-            case ..<40: effect.material = .fullScreenUI
-            default: effect.material = .menu
+            case ..<15: effect.material = .popover
+            case ..<35: effect.material = .windowBackground
+            default: effect.material = .hudWindow
             }
             let scale = (radius - 0.5) / 49.5
             let baseAlpha = 0.3 + 0.7 * scale

@@ -154,20 +154,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showContextMenu() {
         let menu = NSMenu()
         let isOn = overlayManager.isEnabled
-        menu.addItem(withTitle: isOn ? "Disable Overlay" : "Enable Overlay",
-                     action: #selector(toggleFromMenu), keyEquivalent: "").target = self
+        let toggleItem = NSMenuItem(title: isOn ? "Disable Overlay" : "Enable Overlay",
+                                    action: #selector(toggleFromMenu), keyEquivalent: "")
+        toggleItem.image = NSImage(systemSymbolName: isOn ? "pause.circle" : "play.circle",
+                                   accessibilityDescription: nil)
+        toggleItem.target = self
+        menu.addItem(toggleItem)
+
         let focusName = windowTracker.currentApp?.localizedName ?? "—"
-        let item = NSMenuItem(title: "Focused: \(focusName)", action: nil, keyEquivalent: "")
-        item.isEnabled = false
-        menu.addItem(item)
-        let exItem = NSMenuItem(title: isCurrentExcluded() ? "Include Current App" : "Exclude Current App",
+        let focusItem = NSMenuItem(title: "Focused: \(focusName)", action: nil, keyEquivalent: "")
+        focusItem.image = NSImage(systemSymbolName: "macwindow", accessibilityDescription: nil)
+        focusItem.isEnabled = false
+        menu.addItem(focusItem)
+
+        let excluded = isCurrentExcluded()
+        let exItem = NSMenuItem(title: excluded ? "Include Current App" : "Exclude Current App",
                                 action: #selector(toggleExcludeCurrent), keyEquivalent: "")
+        exItem.image = NSImage(systemSymbolName: excluded ? "plus.circle" : "minus.circle",
+                               accessibilityDescription: nil)
         exItem.target = self
         menu.addItem(exItem)
+
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Settings…", action: #selector(openSettingsFromMenu), keyEquivalent: ",").target = self
+
+        let settingsItem = NSMenuItem(title: "Settings…",
+                                      action: #selector(openSettingsFromMenu), keyEquivalent: ",")
+        settingsItem.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit FocusLens", action: #selector(NSApp.terminate(_:)), keyEquivalent: "q")
+
+        let quitItem = NSMenuItem(title: "Quit FocusLens",
+                                  action: #selector(NSApp.terminate(_:)), keyEquivalent: "q")
+        quitItem.image = NSImage(systemSymbolName: "power", accessibilityDescription: nil)
+        menu.addItem(quitItem)
+
         statusItem.menu = menu
         statusItem.button?.performClick(nil)
         statusItem.menu = nil
@@ -206,6 +228,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             w.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
             w.titlebarAppearsTransparent = true
             w.setContentSize(NSSize(width: 760, height: 560))
+            w.standardWindowButton(.closeButton)?.target = w
+            w.standardWindowButton(.closeButton)?.action = #selector(NSWindow.performClose(_:))
             w.center()
             w.isReleasedWhenClosed = false
             settingsWindow = w

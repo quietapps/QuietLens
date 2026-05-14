@@ -148,7 +148,12 @@ final class FocusLensSettings: ObservableObject {
         excludeAppShortcutKey = (d.object(forKey: "excludeAppShortcutKey") as? Int).flatMap { UInt16(exactly: $0) }
         excludeAppShortcutMods = UInt(d.integer(forKey: "excludeAppShortcutMods"))
         onboardingDismissed = d.bool(forKey: "onboardingDismissed")
-        excludedBundleIDs = d.stringArray(forKey: "excludedBundleIDs") ?? []
+        if d.object(forKey: "excludedBundleIDs") == nil {
+            excludedBundleIDs = ["com.apple.finder"]
+            d.set(["com.apple.finder"], forKey: "excludedBundleIDs")
+        } else {
+            excludedBundleIDs = d.stringArray(forKey: "excludedBundleIDs") ?? []
+        }
         highlightSameAppWindows = d.bool(forKey: "highlightSameAppWindows")
         autoHideDock = d.bool(forKey: "autoHideDock")
         autoHideMenuBar = d.bool(forKey: "autoHideMenuBar")

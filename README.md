@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="FocusLens/Resources/Assets.xcassets/AppIcon.appiconset/icon.png" alt="FocusLens" width="128" height="128" onerror="this.style.display='none'" />
+<img src="FocusLens/Resources/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" alt="FocusLens" width="128" height="128" />
 
 # FocusLens
 
