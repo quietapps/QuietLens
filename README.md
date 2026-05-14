@@ -69,21 +69,35 @@ Inspired by [Monocle](https://iamdk.gumroad.com/l/monocle-elegant-macos-window-b
 
 ## Installation
 
-### Download
-Grab the latest signed `.dmg` from the [Releases page](https://github.com/parththummar/FocusLens/releases/latest).
+> **Note:** FocusLens is not yet code-signed with an Apple Developer ID. macOS Gatekeeper will warn on first launch. The steps below work around it. A signed/notarized build is on the roadmap.
 
-```
-1. Open FocusLens.dmg
-2. Drag FocusLens.app into /Applications
-3. Launch — grant Accessibility permission when prompted
-```
+### Homebrew (recommended)
 
-### Homebrew
 ```bash
-brew install --cask focuslens
+brew tap parththummar/focuslens
+brew install --cask --no-quarantine focuslens
 ```
 
-> _Cask listing pending. PRs to [homebrew-cask](https://github.com/Homebrew/homebrew-cask) welcome._
+`--no-quarantine` is required so macOS doesn't block the unsigned app. The tap is community-maintained at [parththummar/homebrew-focuslens](https://github.com/parththummar/homebrew-focuslens).
+
+### Direct download
+
+1. Grab `FocusLens.zip` from the [latest release](https://github.com/parththummar/FocusLens/releases/latest)
+2. Unzip → drag `FocusLens.app` into `/Applications`
+3. Strip the quarantine attribute (or `Right-click → Open` once):
+
+```bash
+xattr -dr com.apple.quarantine /Applications/FocusLens.app
+```
+
+4. Launch FocusLens
+5. Grant **Accessibility** access when prompted (System Settings → Privacy & Security → Accessibility)
+
+### Heads-up about unsigned builds
+
+- After every new release, you may need to **remove + re-add FocusLens** in System Settings → Privacy & Security → Accessibility. macOS ties the permission to the app's code-signature hash, and unsigned builds change hash each time.
+- Right-click → Open works as a one-time bypass if `xattr` feels intimidating.
+- If Gatekeeper still blocks the app, open **System Settings → Privacy & Security**, scroll to the message about FocusLens, click **Open Anyway**.
 
 ## Usage
 
