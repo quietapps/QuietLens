@@ -94,6 +94,7 @@ final class OverlayManager {
             for (_, w) in windows {
                 w.fadeOut(duration: animated ? settings.fadeDuration : 0)
             }
+            WindowRaiser.shared.clearAll()
         }
     }
 
@@ -146,29 +147,45 @@ final class OverlayManager {
     }
 
     private func refreshCutouts(animated: Bool) {
-        guard isVisible else { return }
-        let perScreenWindows = computePerScreenWindows()
+        guard isVisible else {
+            WindowRaiser.shared.clearAll()
+            return
+        }
+        let perScreen = computePerScreenWindows()
+        var allIDs = Set<CGWindowID>()
         for (id, w) in windows {
-            guard let screen = NSScreen.screens.first(where: { screenID($0) == id }) else { continue }
+            guard NSScreen.screens.first(where: { screenID($0) == id }) != nil else { continue }
             let overlayRect = w.frame
-            let frames = perScreenWindows[id] ?? []
-            let cutouts = frames.compactMap { frame -> CGRect? in
-                let inter = frame.intersection(overlayRect)
+            let entries = perScreen[id] ?? []
+            let cutouts = entries.compactMap { entry -> CGRect? in
+                let inter = entry.rect.intersection(overlayRect)
                 if inter.isNull || inter.isEmpty { return nil }
                 return CGRect(x: inter.minX - overlayRect.minX,
                               y: inter.minY - overlayRect.minY,
                               width: inter.width, height: inter.height)
             }
-            _ = screen
+            for e in entries where e.windowID != 0 { allIDs.insert(e.windowID) }
             w.setCutouts(cutouts, duration: animated ? settings.fadeDuration : 0)
         }
+        let raiseLevel = Int32(CGWindowLevelForKey(.screenSaverWindow))
+        WindowRaiser.shared.setRaised(allIDs, level: raiseLevel)
     }
 
-    private func computePerScreenWindows() -> [CGDirectDisplayID: [CGRect]] {
+    struct WindowEntry {
+        let windowID: CGWindowID
+        let rect: CGRect
+    }
+
+    private func computePerScreenWindows() -> [CGDirectDisplayID: [WindowEntry]] {
         let opts: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
         guard let arr = CGWindowListCopyWindowInfo(opts, kCGNullWindowID) as? [[String: Any]] else { return [:] }
 
-        var entries: [(pid: pid_t, rect: CGRect, layer: Int, owner: String, alpha: Double)] = []
+        struct CGEntry {
+            let windowID: CGWindowID
+            let pid: pid_t
+            let rect: CGRect
+        }
+        var entries: [CGEntry] = []
         for d in arr {
             let layer = (d[kCGWindowLayer as String] as? Int) ?? 0
             if layer > 0 { continue }
@@ -180,43 +197,49 @@ final class OverlayManager {
             let alpha = (d[kCGWindowAlpha as String] as? Double) ?? 1.0
             if alpha < 0.05 { continue }
             if r.width < 40 || r.height < 30 { continue }
-            let owner = (d[kCGWindowOwnerName as String] as? String) ?? ""
-            entries.append((pid, cgToCocoa(r), layer, owner, alpha))
+            let wid = (d[kCGWindowNumber as String] as? CGWindowID) ?? 0
+            entries.append(CGEntry(windowID: wid, pid: pid, rect: cgToCocoa(r)))
         }
 
         let frontPID = NSWorkspace.shared.frontmostApplication?.processIdentifier ?? -1
-        var out: [CGDirectDisplayID: [CGRect]] = [:]
+        var out: [CGDirectDisplayID: [WindowEntry]] = [:]
 
         for screen in NSScreen.screens {
             let id = screenID(screen)
             let sf = screen.frame
-            var picked: [CGRect] = []
+            var picked: [WindowEntry] = []
 
             if settings.highlightSameAppWindows {
                 for e in entries where e.pid == frontPID {
-                    if e.rect.intersects(sf) { picked.append(e.rect) }
+                    if e.rect.intersects(sf) {
+                        picked.append(WindowEntry(windowID: e.windowID, rect: e.rect))
+                    }
                 }
                 if let ax = focused?.frame, focused?.pid == frontPID {
                     let cocoa = axToCocoa(ax)
-                    if cocoa.intersects(sf) && !picked.contains(where: { rectsApproxEqual($0, cocoa) }) {
-                        picked.append(cocoa)
+                    if cocoa.intersects(sf) && !picked.contains(where: { rectsApproxEqual($0.rect, cocoa) }) {
+                        let wid = focused?.windowNumber ?? 0
+                        picked.append(WindowEntry(windowID: wid, rect: cocoa))
                     }
                 }
                 if picked.isEmpty, let top = entries.first(where: { $0.rect.intersects(sf) }) {
-                    picked.append(top.rect)
+                    picked.append(WindowEntry(windowID: top.windowID, rect: top.rect))
                 }
             } else {
                 if let ax = focused?.frame, focused?.pid == frontPID {
                     let cocoa = axToCocoa(ax)
-                    if cocoa.intersects(sf) { picked.append(cocoa) }
+                    if cocoa.intersects(sf) {
+                        let wid = focused?.windowNumber ?? entries.first(where: { $0.pid == frontPID && rectsApproxEqual($0.rect, cocoa) })?.windowID ?? 0
+                        picked.append(WindowEntry(windowID: wid, rect: cocoa))
+                    }
                 }
                 if picked.isEmpty,
                    let top = entries.first(where: { $0.pid == frontPID && $0.rect.intersects(sf) }) {
-                    picked.append(top.rect)
+                    picked.append(WindowEntry(windowID: top.windowID, rect: top.rect))
                 }
                 if picked.isEmpty,
                    let any = entries.first(where: { $0.rect.intersects(sf) }) {
-                    picked.append(any.rect)
+                    picked.append(WindowEntry(windowID: any.windowID, rect: any.rect))
                 }
             }
             out[id] = picked

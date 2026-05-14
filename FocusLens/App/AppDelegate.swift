@@ -2,7 +2,11 @@ import AppKit
 import SwiftUI
 import Combine
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
+    @MainActor func applicationWillTerminate(_ notification: Notification) {
+        WindowRaiser.shared.clearAll()
+    }
+
     static private(set) var shared: AppDelegate!
 
     var statusItem: NSStatusItem!
@@ -298,22 +302,69 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @MainActor
+    private enum MenuIconState {
+        case off, ambient, deep, excluded
+    }
+
+    @MainActor
     private func updateStatusIcon() {
         guard let btn = statusItem?.button else { return }
         let isOn = overlayManager?.isEnabled ?? false
         let excluded = isCurrentExcluded()
         let ambient = FocusLensSettings.shared.overlayMode == .ambient
-        let name: String
-        if excluded {
-            name = "circle.dashed"
-        } else if isOn && ambient {
-            name = "circle.righthalf.filled"
-        } else if isOn {
-            name = "circle.lefthalf.filled"
-        } else {
-            name = "circle"
+
+        let state: MenuIconState
+        if excluded { state = .excluded }
+        else if isOn && ambient { state = .ambient }
+        else if isOn { state = .deep }
+        else { state = .off }
+
+        let image = Self.menuBarImage(state: state)
+        btn.image = image
+        btn.image?.isTemplate = (state != .ambient)
+    }
+
+    private static func menuBarImage(state: MenuIconState) -> NSImage {
+        let size = NSSize(width: 18, height: 18)
+        let img = NSImage(size: size, flipped: false) { _ in
+            guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
+            let circleRect = CGRect(x: 1.5, y: 1.5, width: 15, height: 15)
+            let center = CGPoint(x: 9, y: 9)
+            switch state {
+            case .off:
+                ctx.setStrokeColor(NSColor.black.cgColor)
+                ctx.setLineWidth(1.4)
+                ctx.strokeEllipse(in: circleRect)
+            case .deep:
+                ctx.setFillColor(NSColor.black.cgColor)
+                ctx.fillEllipse(in: circleRect)
+                ctx.setBlendMode(.destinationOut)
+                ctx.setFillColor(NSColor.black.cgColor)
+                let innerR: CGFloat = 2.4
+                ctx.fillEllipse(in: CGRect(x: center.x - innerR, y: center.y - innerR,
+                                           width: innerR*2, height: innerR*2))
+            case .ambient:
+                let cs = CGColorSpaceCreateDeviceRGB()
+                ctx.saveGState()
+                ctx.addEllipse(in: circleRect); ctx.clip()
+                let grad = CGGradient(colorsSpace: cs, colors: [
+                    CGColor(srgbRed: 0.55, green: 0.30, blue: 1.0, alpha: 1),
+                    CGColor(srgbRed: 0.10, green: 0.50, blue: 1.0, alpha: 1),
+                    CGColor(srgbRed: 0.20, green: 0.85, blue: 1.0, alpha: 1)
+                ] as CFArray, locations: [0, 0.5, 1])!
+                ctx.drawLinearGradient(grad,
+                    start: CGPoint(x: circleRect.minX, y: circleRect.maxY),
+                    end: CGPoint(x: circleRect.maxX, y: circleRect.minY),
+                    options: [])
+                ctx.restoreGState()
+            case .excluded:
+                ctx.setStrokeColor(NSColor.black.cgColor)
+                ctx.setLineWidth(1.4)
+                ctx.setLineDash(phase: 0, lengths: [2.2, 1.6])
+                ctx.strokeEllipse(in: circleRect)
+            }
+            return true
         }
-        btn.image = NSImage(systemSymbolName: name, accessibilityDescription: "FocusLens")
-        btn.image?.isTemplate = true
+        return img
     }
 }

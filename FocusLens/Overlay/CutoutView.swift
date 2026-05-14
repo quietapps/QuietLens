@@ -18,8 +18,7 @@ final class CutoutView: NSView {
         let path = CGMutablePath()
         path.addRect(bounds)
         for r in rects {
-            let expanded = r.insetBy(dx: -1.5, dy: -1.5)
-            let rounded = CGPath(roundedRect: expanded, cornerWidth: 14, cornerHeight: 14, transform: nil)
+            let rounded = CGPath(roundedRect: r, cornerWidth: 12, cornerHeight: 12, transform: nil)
             path.addPath(rounded)
         }
         guard let target = maskTarget else { return }

@@ -14,6 +14,7 @@
 		6C1A7E3F41BDF37C14208222 /* RulesSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29D6B400FEA99D11EFB73C0F /* RulesSettings.swift */; };
 		82D43817F8139C382D99F4A2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 388DD3AEA35733DCF57B0BD4 /* AppDelegate.swift */; };
 		93F59480EF2FE763576452C0 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80EE2186B42A95F304CAFC6A /* SettingsView.swift */; };
+		AA71E73C40B163FF367A8E73 /* WindowRaiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E1FEE3BEC2A7B7B40153B6D /* WindowRaiser.swift */; };
 		B263120A37B39ACE63832A77 /* AppearanceSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F19E8456D51D88FA1BBCCBD7 /* AppearanceSettings.swift */; };
 		B2AA55C0D290164B08BAC5A0 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 276B5068780D175A541B6E3D /* HotkeyManager.swift */; };
 		D167173CE801701D3D4220C7 /* GestureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2E582C474345FA2CB0539D /* GestureSettings.swift */; };
@@ -31,6 +32,7 @@
 		014146B74D1E2F5FDF95B5F7 /* FocusLens.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FocusLens.entitlements; sourceTree = "<group>"; };
 		0A83719E2EBA1AF5A7C01718 /* OverlayManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayManager.swift; sourceTree = "<group>"; };
 		10A6995DCDFF32018868EC36 /* ExcludedApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExcludedApp.swift; sourceTree = "<group>"; };
+		1E1FEE3BEC2A7B7B40153B6D /* WindowRaiser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowRaiser.swift; sourceTree = "<group>"; };
 		1EEFAE2850C30E3C56D372D2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2429B902AB165FC1BFDA7EDE /* FocusLens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FocusLens.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		276B5068780D175A541B6E3D /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
@@ -78,6 +80,7 @@
 				276B5068780D175A541B6E3D /* HotkeyManager.swift */,
 				0A83719E2EBA1AF5A7C01718 /* OverlayManager.swift */,
 				DE3256F1C033344DE6ECA45D /* ShakeDetector.swift */,
+				1E1FEE3BEC2A7B7B40153B6D /* WindowRaiser.swift */,
 				67A09196781F350091530CE0 /* WindowTracker.swift */,
 			);
 			path = Core;
@@ -227,6 +230,7 @@
 				FD6330B144C8ED6C5709FB72 /* Settings.swift in Sources */,
 				93F59480EF2FE763576452C0 /* SettingsView.swift in Sources */,
 				FFE0E0C4E635E466D85F843F /* ShakeDetector.swift in Sources */,
+				AA71E73C40B163FF367A8E73 /* WindowRaiser.swift in Sources */,
 				F11FE38C08764FDB07D58741 /* WindowTracker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
