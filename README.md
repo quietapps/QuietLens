@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="FocusLens/Resources/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" alt="FocusLens" width="128" height="128" />
+<img src="QuietLens/Resources/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" alt="Quiet Lens" width="128" height="128" />
 
-# FocusLens
+# Quiet Lens
 
 **Dim everything except your active window.**
 
@@ -12,9 +12,9 @@ A native macOS menu bar app that blurs every window except the one you're workin
 [![Swift](https://img.shields.io/badge/Swift-5.9-F05138?logo=swift&logoColor=white)](https://swift.org)
 [![SwiftUI](https://img.shields.io/badge/SwiftUI-AppKit-2396F3?logo=swift&logoColor=white)](https://developer.apple.com/xcode/swiftui/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/parththummar/FocusLens?display_name=tag)](https://github.com/parththummar/FocusLens/releases)
-[![Downloads](https://img.shields.io/github/downloads/parththummar/FocusLens/total.svg)](https://github.com/parththummar/FocusLens/releases)
-[![Stars](https://img.shields.io/github/stars/parththummar/FocusLens?style=social)](https://github.com/parththummar/FocusLens/stargazers)
+[![Release](https://img.shields.io/github/v/release/quietapps/QuietLens?display_name=tag)](https://github.com/quietapps/QuietLens/releases)
+[![Downloads](https://img.shields.io/github/downloads/quietapps/QuietLens/total.svg)](https://github.com/quietapps/QuietLens/releases)
+[![Stars](https://img.shields.io/github/stars/quietapps/QuietLens?style=social)](https://github.com/quietapps/QuietLens/stargazers)
 
 [Download](#installation) · [Features](#features) · [Usage](#usage) · [Build from source](#build-from-source) · [Contributing](#contributing)
 
@@ -24,7 +24,7 @@ A native macOS menu bar app that blurs every window except the one you're workin
 
 ## Why
 
-You have ten apps open. You only need one. FocusLens covers everything else with a soft frosted-glass dim — the active window stays crisp, the rest fades into background noise. Click through to the next window and the dim moves with you, smooth and animated. Shake your cursor to toggle. No new keybinding to learn, no app switcher to fight.
+You have ten apps open. You only need one. Quiet Lens covers everything else with a soft frosted-glass dim — the active window stays crisp, the rest fades into background noise. Click through to the next window and the dim moves with you, smooth and animated. Shake your cursor to toggle. No new keybinding to learn, no app switcher to fight.
 
 Inspired by [Monocle](https://iamdk.gumroad.com/l/monocle-elegant-macos-window-blur-focus). Rebuilt from scratch, **free and open source under MIT**.
 
@@ -85,7 +85,7 @@ Inspired by [Monocle](https://iamdk.gumroad.com/l/monocle-elegant-macos-window-b
 - Menu bar agent (no Dock icon)
 - Control Center–style Settings UI built in SwiftUI (sidebar nav, material-backed cards, segmented mode picker)
 - Custom app icon (depth-tunnel concentric focus rings) + 4-state menu bar glyph
-- URL scheme automation: `focuslens://toggle | enable | disable | settings`
+- URL scheme automation: `quietlens://toggle | enable | disable | settings`
 - Multi-display aware, hot-swappable monitors
 - Onboarding for Accessibility permission with auto-recovery polling
 - ⌘W closes Settings, transparent titlebar, vibrant material background
@@ -93,28 +93,28 @@ Inspired by [Monocle](https://iamdk.gumroad.com/l/monocle-elegant-macos-window-b
 
 ## Installation
 
-> **Note:** FocusLens is not yet code-signed with an Apple Developer ID. macOS Gatekeeper will warn on first launch. The steps below work around it. A signed/notarized build is on the roadmap.
+> **Note:** Quiet Lens is not yet code-signed with an Apple Developer ID. macOS Gatekeeper will warn on first launch. The steps below work around it. A signed/notarized build is on the roadmap.
 
 ### Homebrew (recommended)
 
 ```bash
-brew tap parththummar/focuslens
-brew install --cask focuslens
+brew tap quietapps/quietlens
+brew install --cask quietlens
 ```
 
-The cask strips the macOS quarantine attribute on install so Gatekeeper does not block launch (the build is currently unsigned). The tap is community-maintained at [parththummar/homebrew-focuslens](https://github.com/parththummar/homebrew-focuslens).
+The cask strips the macOS quarantine attribute on install so Gatekeeper does not block launch (the build is currently unsigned). The tap is community-maintained at [quietapps/homebrew-quietlens](https://github.com/quietapps/homebrew-quietlens).
 
 ### Direct download
 
-1. Grab `FocusLens.zip` from the [latest release](https://github.com/parththummar/FocusLens/releases/latest)
-2. Unzip → drag `FocusLens.app` into `/Applications`
+1. Grab `Quiet Lens.zip` from the [latest release](https://github.com/quietapps/QuietLens/releases/latest)
+2. Unzip → drag `Quiet Lens.app` into `/Applications`
 3. Strip the quarantine attribute (or `Right-click → Open` once):
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/FocusLens.app
+xattr -dr com.apple.quarantine /Applications/Quiet Lens.app
 ```
 
-4. Launch FocusLens
+4. Launch Quiet Lens
 5. Grant **Accessibility** access when prompted (System Settings → Privacy & Security → Accessibility)
 
 ### Heads-up about unsigned builds
@@ -122,11 +122,11 @@ xattr -dr com.apple.quarantine /Applications/FocusLens.app
 - The Homebrew cask strips every extended attribute and re-registers the bundle with Launch Services on install, so the app should launch on a clean Mac out of the box.
 - If a double-click does nothing on first launch, this is Gatekeeper silently blocking the unsigned binary. Fix it once:
   1. Open Finder → `/Applications`
-  2. **Right-click** FocusLens.app → **Open**
+  2. **Right-click** Quiet Lens.app → **Open**
   3. Click **Open** in the warning dialog
   4. macOS remembers your choice for every subsequent launch
-- After every new release, you may need to **remove + re-add FocusLens** in System Settings → Privacy & Security → Accessibility. macOS ties the permission to the app's code-signature hash, and unsigned builds change hash each time.
-- If Gatekeeper still won't let the app run, open **System Settings → Privacy & Security**, scroll to the message about FocusLens, click **Open Anyway**.
+- After every new release, you may need to **remove + re-add Quiet Lens** in System Settings → Privacy & Security → Accessibility. macOS ties the permission to the app's code-signature hash, and unsigned builds change hash each time.
+- If Gatekeeper still won't let the app run, open **System Settings → Privacy & Security**, scroll to the message about Quiet Lens, click **Open Anyway**.
 
 ## Updating
 
@@ -134,20 +134,20 @@ xattr -dr com.apple.quarantine /Applications/FocusLens.app
 
 ```bash
 brew update
-brew upgrade --cask focuslens
+brew upgrade --cask quietlens
 ```
 
-After upgrading, if FocusLens stops detecting your active window:
+After upgrading, if Quiet Lens stops detecting your active window:
 
 1. Open **System Settings → Privacy & Security → Accessibility**
-2. Select **FocusLens** in the list and click the **−** button to remove it
-3. Click **+**, add `/Applications/FocusLens.app` again, and enable the toggle
+2. Select **Quiet Lens** in the list and click the **−** button to remove it
+3. Click **+**, add `/Applications/Quiet Lens.app` again, and enable the toggle
 
 This is needed because each unsigned build has a different code-signature hash. A signed release in the future will eliminate this step.
 
 ### Direct download
 
-Download the newer zip from [Releases](https://github.com/parththummar/FocusLens/releases), drag the new `FocusLens.app` over the old one in `/Applications`, run `xattr -dr com.apple.quarantine /Applications/FocusLens.app`, then re-grant Accessibility as above.
+Download the newer zip from [Releases](https://github.com/quietapps/QuietLens/releases), drag the new `Quiet Lens.app` over the old one in `/Applications`, run `xattr -dr com.apple.quarantine /Applications/Quiet Lens.app`, then re-grant Accessibility as above.
 
 ## Uninstalling
 
@@ -155,10 +155,10 @@ Download the newer zip from [Releases](https://github.com/parththummar/FocusLens
 
 ```bash
 # Remove the app and its preferences (via the cask's zap stanza)
-brew uninstall --cask --zap focuslens
+brew uninstall --cask --zap quietlens
 
 # Drop the tap
-brew untap parththummar/focuslens
+brew untap parththummar/quietlens
 
 # Purge Homebrew's download cache + old logs
 brew cleanup --prune=all -s
@@ -167,32 +167,32 @@ brew cleanup --prune=all -s
 Optional manual cleanup if you skipped `--zap`:
 
 ```bash
-defaults delete com.parththummar.FocusLens 2>/dev/null
-rm -rf ~/Library/Preferences/com.parththummar.FocusLens.plist \
-       ~/Library/Application\ Support/FocusLens \
-       ~/Library/Caches/com.parththummar.FocusLens \
-       ~/Library/HTTPStorages/com.parththummar.FocusLens \
-       ~/Library/Saved\ Application\ State/com.parththummar.FocusLens.savedState
+defaults delete app.quiet.QuietLens 2>/dev/null
+rm -rf ~/Library/Preferences/app.quiet.QuietLens.plist \
+       ~/Library/Application\ Support/Quiet Lens \
+       ~/Library/Caches/app.quiet.QuietLens \
+       ~/Library/HTTPStorages/app.quiet.QuietLens \
+       ~/Library/Saved\ Application\ State/app.quiet.QuietLens.savedState
 ```
 
-Then remove the **FocusLens** row from **System Settings → Privacy & Security → Accessibility** so macOS forgets the old TCC grant.
+Then remove the **Quiet Lens** row from **System Settings → Privacy & Security → Accessibility** so macOS forgets the old TCC grant.
 
 ### Direct download
 
 ```bash
 # Move the app to Trash
-rm -rf /Applications/FocusLens.app
+rm -rf /Applications/Quiet Lens.app
 
 # Remove saved settings + caches
-defaults delete com.parththummar.FocusLens 2>/dev/null
-rm -rf ~/Library/Preferences/com.parththummar.FocusLens.plist \
-       ~/Library/Application\ Support/FocusLens \
-       ~/Library/Caches/com.parththummar.FocusLens \
-       ~/Library/HTTPStorages/com.parththummar.FocusLens \
-       ~/Library/Saved\ Application\ State/com.parththummar.FocusLens.savedState
+defaults delete app.quiet.QuietLens 2>/dev/null
+rm -rf ~/Library/Preferences/app.quiet.QuietLens.plist \
+       ~/Library/Application\ Support/Quiet Lens \
+       ~/Library/Caches/app.quiet.QuietLens \
+       ~/Library/HTTPStorages/app.quiet.QuietLens \
+       ~/Library/Saved\ Application\ State/app.quiet.QuietLens.savedState
 ```
 
-Then remove FocusLens from **System Settings → Privacy & Security → Accessibility**.
+Then remove Quiet Lens from **System Settings → Privacy & Security → Accessibility**.
 
 ### Verify it's fully gone
 
@@ -230,22 +230,22 @@ Each item carries an SF Symbol so the menu reads at a glance: ▶︎ enable, ⏸
 
 ### URL scheme
 
-Drive FocusLens from Shortcuts, AppleScript, or a Terminal:
+Drive Quiet Lens from Shortcuts, AppleScript, or a Terminal:
 
 ```bash
-open "focuslens://toggle"
-open "focuslens://enable"
-open "focuslens://disable"
-open "focuslens://settings"
+open "quietlens://toggle"
+open "quietlens://enable"
+open "quietlens://disable"
+open "quietlens://settings"
 ```
 
 ## Permissions
 
-FocusLens needs **Accessibility** access to detect which window you're focused on.
+Quiet Lens needs **Accessibility** access to detect which window you're focused on.
 
-On first launch you'll see an onboarding window with a one-click button to **System Settings → Privacy & Security → Accessibility**. Flip the FocusLens switch on. The app polls every 1.5s and starts the moment you grant access — no restart needed. Once permission is granted for the first time, the Settings window opens automatically with a welcome banner explaining how to use FocusLens.
+On first launch you'll see an onboarding window with a one-click button to **System Settings → Privacy & Security → Accessibility**. Flip the Quiet Lens switch on. The app polls every 1.5s and starts the moment you grant access — no restart needed. Once permission is granted for the first time, the Settings window opens automatically with a welcome banner explaining how to use Quiet Lens.
 
-> **Heads up:** macOS ties Accessibility permission to the app's **code signature**. If you rebuild FocusLens from source the signature changes and the old permission entry no longer matches. Fix: remove FocusLens from the Accessibility list and add it again. Signed release builds don't have this problem.
+> **Heads up:** macOS ties Accessibility permission to the app's **code signature**. If you rebuild Quiet Lens from source the signature changes and the old permission entry no longer matches. Fix: remove Quiet Lens from the Accessibility list and add it again. Signed release builds don't have this problem.
 
 ## Build from source
 
@@ -257,25 +257,25 @@ On first launch you'll see an onboarding window with a one-click button to **Sys
 ### Steps
 
 ```bash
-git clone https://github.com/parththummar/FocusLens.git
-cd FocusLens
+git clone https://github.com/quietapps/QuietLens.git
+cd Quiet Lens
 brew install xcodegen
 xcodegen generate
-open FocusLens.xcodeproj
+open QuietLens.xcodeproj
 ```
 
 Hit ⌘R in Xcode. Or from the command line:
 
 ```bash
-xcodebuild -project FocusLens.xcodeproj -scheme FocusLens -configuration Release build
+xcodebuild -project QuietLens.xcodeproj -scheme QuietLens -configuration Release build
 ```
 
-The built `.app` lands in `~/Library/Developer/Xcode/DerivedData/FocusLens-*/Build/Products/Release/`.
+The built `.app` lands in `~/Library/Developer/Xcode/DerivedData/QuietLens-*/Build/Products/Release/`.
 
 ### Project layout
 
 ```
-FocusLens/
+Quiet Lens/
 ├── App/             # App entry point, AppDelegate, status item
 ├── Core/            # WindowTracker, OverlayManager, ShakeDetector, HotkeyManager, AutomationHandler
 ├── Overlay/         # OverlayWindow, BlurOverlayView, CutoutView
@@ -291,7 +291,7 @@ No external dependencies — Apple frameworks only (AppKit, SwiftUI, CoreImage, 
 Settings live in `UserDefaults` under your standard suite. Reset everything with:
 
 ```bash
-defaults delete com.parththummar.FocusLens
+defaults delete app.quiet.QuietLens
 ```
 
 ## Contributing
@@ -349,7 +349,7 @@ Right-click the menu bar icon → **Quit**.
 Yes — Settings → Gestures → Global Shortcuts → record one for **Exclude Current App**.
 
 **Why does Finder not get blurred?**
-FocusLens excludes Finder by default so alt-tabbing to the desktop doesn't trigger the overlay. Remove it from Settings → Rules → Excluded Apps if you want Finder blurred too.
+Quiet Lens excludes Finder by default so alt-tabbing to the desktop doesn't trigger the overlay. Remove it from Settings → Rules → Excluded Apps if you want Finder blurred too.
 
 ## License
 
@@ -360,5 +360,5 @@ Inspired by [Monocle](https://iamdk.gumroad.com/l/monocle-elegant-macos-window-b
 ---
 
 <div align="center">
-If FocusLens helps you focus, drop a ⭐ on the repo.
+If Quiet Lens helps you focus, drop a ⭐ on the repo.
 </div>

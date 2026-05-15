@@ -1,8 +1,37 @@
 # Changelog
 
-All notable changes to FocusLens are documented in this file.
+All notable changes to Quiet Lens are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.3] — 2026-05-15
+
+**Build 4** · Rebrand — FocusLens is now **Quiet Lens**, the first app under the new **Quiet** company umbrella.
+
+### Changed
+- **App name**: FocusLens → **Quiet Lens** (display name everywhere, status item title, settings sidebar, About card, Welcome screen, menu bar context menu).
+- **Bundle identifier**: `com.parththummar.FocusLens` → `app.quiet.QuietLens`.
+- **URL scheme**: `focuslens://` → `quietlens://` (`quietlens://toggle`, `enable`, `disable`, `settings`).
+- **Repository**: `parththummar/FocusLens` → `quietapps/QuietLens`.
+- **Homebrew tap**: `parththummar/homebrew-focuslens` → `quietapps/homebrew-quietlens`.
+- **Cask name**: `focuslens` → `quietlens`.
+- **Swift symbols**: `FocusLensSettings` → `QuietLensSettings`, `FocusLensApp` → `QuietLensApp`, `Notification.Name.focusLensShortcutChanged` → `.quietLensShortcutChanged`.
+- **Xcode project + target**: `FocusLens.xcodeproj` / `FocusLens` target → `QuietLens.xcodeproj` / `QuietLens` target.
+- **LICENSE** copyright holder updated to **Quiet**.
+- **Tinted mode** now visually distinct from Deep — uses light `.hudWindow` blur + `multiplyBlendMode` compositing on the tint layer, so the user's chosen color casts onto the background (camera-filter feel) instead of looking like a dimmer Deep.
+
+### Migration
+- **Existing FocusLens users must re-grant Accessibility** because macOS treats the renamed bundle as a different app. After upgrading: open System Settings → Privacy & Security → Accessibility, remove FocusLens (now stale), add Quiet Lens from `/Applications`, toggle it on.
+- **UserDefaults keys carry over automatically** — keys live in `UserDefaults.standard` with generic names (`blurRadius`, `tintColorHex`, etc.) and survive the bundle-ID rename. Your sliders, tints, exclude list and pinned apps stay configured.
+- **Old Homebrew users**: uninstall the old cask first, then install the new tap:
+  ```
+  brew uninstall --cask focuslens
+  brew untap parththummar/focuslens
+  brew tap quietapps/quietlens
+  brew install --cask quietlens
+  ```
+
+---
 
 ## [1.0.2] — 2026-05-15
 
@@ -17,7 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Keyboard navigation** — ⌘1–⌘5 switch tabs (General / Appearance / Gestures / Rules / About).
 - **Third overlay mode: Tinted** — solid color wash with light blur, sitting between Deep and Ambient. Mode picker is a three-tile selector with status-dot accents (blue / purple / pink) and a description per tile.
 - **"Pin current window" global shortcut** — fourth hotkey ID alongside Toggle / Settings / Exclude. Toggles the frontmost app's bundle ID in the pinned list.
-- **Color Scheme override** in General (System / Light / Dark) — forces the FocusLens UI to a specific scheme regardless of macOS preference.
+- **Color Scheme override** in General (System / Light / Dark) — forces the Quiet Lens UI to a specific scheme regardless of macOS preference.
 - **Show indicator dot** toggle — when off, the menu bar icon reads as a generic hollow ring even when the overlay is active (low-key mode).
 - Welcome / Onboarding screen rebuilt — 96 px glass icon tile, accent radial glow, status pill, primary + ghost button pair, numbered-chip troubleshooting panel.
 - **Coming-soon badges** on every UI element that's wired in the UI but not yet driving real behavior — Auto-enable on focus, iCloud Settings Sync, Check for Updates, Cursor halo, Focus on hover, Auto-disable after. Each is visually dimmed and non-interactive with a small "COMING SOON" accent pill next to the title.
@@ -27,7 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Window level**: settings + onboarding windows sit at `.normal` level by default. When key, they auto-raise to `screenSaverWindow + 1` so dropdown menus and pickers appear above the overlay; when you switch to another app the window auto-drops back to `.normal` so it doesn't pin itself above everything.
 - **Sliders** are now built from scratch on a custom `DragGesture` over the visible 4 px track + 18 px white thumb + accent fill + accent glow. Click-to-position works, drag works, hit area covers the full row. `isMovableByWindowBackground` is now off so window-drag doesn't intercept slider gestures.
 - **Sensitivity** is now a 5-segment level bar (Very Low → Very High) with capsules that fill left-to-right with accent + glow as the level rises.
-- **Sidebar**: 30 px brand icon + "FocusLens" label + version-uppercase caption, accent-tinted active item with glass background + edge-top highlight, ⌘1–⌘5 hints per row, persistent search field with `⌘K` chip at the bottom.
+- **Sidebar**: 30 px brand icon + "Quiet Lens" label + version-uppercase caption, accent-tinted active item with glass background + edge-top highlight, ⌘1–⌘5 hints per row, persistent search field with `⌘K` chip at the bottom.
 - **Color picker**: now a 15-swatch grid (rainbow custom picker + brights: Purple/Cyan/Magenta/Orange/Yellow/Green/Blue + darks: Indigo/Navy/Forest/Crimson/Slate/Charcoal + neutrals White/Black). Adaptive grid wraps on narrow widths. Selected swatch shows a 1.5 px solid ring offset 4 px outside the swatch.
 - **"Menu Icon click action"** (renamed from "Left-click action") and **"Color Scheme"** are now segmented (radio-style) controls so they don't need to open a popover.
 - **Real overlay blur strength** boosted — `NSVisualEffectView.alphaValue` no longer modulated against radius (which was making the blur invisible at low/mid radii). Material tiers now scale across the full 0–50 range: `.hudWindow` → `.underWindowBackground` → `.fullScreenUI` → `.menu` (heaviest). Tint layer continues to handle the opacity slider.
@@ -36,7 +65,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Technical
 - New files: `DesignSystem.swift`, `GlassComponents.swift`, `LivePreview.swift`, `GeneralScreen.swift`, `AppearanceScreen.swift`, `GestureScreen.swift`, `RulesScreen.swift`, `AboutScreen.swift`.
 - Removed: `AppearanceSettings.swift`, `RulesSettings.swift` (replaced by Screen-prefixed equivalents). `GestureSettings.swift` slimmed to host the `ShortcutRecorder` static helpers + `KeyCaptureView` used by the new `ShortcutRow`.
-- `FocusLensSettings` adds `autoEnableOnFocus`, `showIndicatorDot`, `colorSchemePref`, `cursorHalo`, `focusOnHover`, `autoDisableAfter`, `pinShortcutKey`/`pinShortcutMods`. All seven mirror through `iCloudSync` along with the existing keys.
+- `QuietLensSettings` adds `autoEnableOnFocus`, `showIndicatorDot`, `colorSchemePref`, `cursorHalo`, `focusOnHover`, `autoDisableAfter`, `pinShortcutKey`/`pinShortcutMods`. All seven mirror through `iCloudSync` along with the existing keys.
 - `HotkeyManager` adds a fourth hotkey ID (pin current window) and routes it via `AppDelegate.togglePinCurrent()`.
 - `OverlayMode` extended with `.tinted` — `BlurOverlayView` now respects three modes (deep / ambient / tinted) with mode-specific tint blend modes (`.multiply` for tinted).
 - Menu bar icon respects `showIndicatorDot` — falls back to the off-state ring when the dot is disabled even while overlay is enabled.
@@ -61,7 +90,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 - Settings model: added `pinnedBundleIDs`, `iCloudSyncEnabled`, `edgeGlowEnabled`, `edgeGlowRadius`, `backdropMode`, `backdropImagePath` properties with `UserDefaults` persistence
-- `FocusLensSettings.reload()` added — re-reads every key from `UserDefaults` and republishes to subscribers. Used by iCloud sync to refresh when remote changes land.
+- `QuietLensSettings.reload()` added — re-reads every key from `UserDefaults` and republishes to subscribers. Used by iCloud sync to refresh when remote changes land.
 
 ### Technical
 - New file `Core/iCloudSync.swift` — KVS bridge with bidirectional sync, equality-checked to avoid infinite ping-pong
@@ -127,11 +156,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Right-click menu bar context menu with current-app indicator
 
 #### Automation
-- URL scheme `focuslens://`
-  - `focuslens://toggle`
-  - `focuslens://enable`
-  - `focuslens://disable`
-  - `focuslens://settings`
+- URL scheme `quietlens://`
+  - `quietlens://toggle`
+  - `quietlens://enable`
+  - `quietlens://disable`
+  - `quietlens://settings`
 - AppleScript-driveable via `open` command
 
 #### System integration
@@ -153,7 +182,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
-[Unreleased]: https://github.com/parththummar/FocusLens/compare/1.0.2...HEAD
+[Unreleased]: https://github.com/quietapps/QuietLens/compare/1.0.3...HEAD
+[1.0.3]: https://github.com/quietapps/QuietLens/releases/tag/1.0.3
 [1.0.2]: https://github.com/parththummar/FocusLens/releases/tag/1.0.2
 [1.0.1]: https://github.com/parththummar/FocusLens/releases/tag/1.0.1
 [1.0.0]: https://github.com/parththummar/FocusLens/releases/tag/1.0.0
