@@ -23,6 +23,10 @@ final class OverlayManager {
 
     func setEnabled(_ on: Bool, animated: Bool) {
         isEnabled = on
+        if on {
+            isDragging = false
+            isPeeking = false
+        }
         updateVisibility(animated: animated)
     }
 
@@ -54,7 +58,24 @@ final class OverlayManager {
     }
 
     @objc private func screensChanged() {
-        rebuildWindows()
+        // Avoid rebuilding the overlay windows here. didChangeScreenParameters
+        // fires for tiny visibleFrame changes too (e.g. when applyAutoHide
+        // toggles the menu-bar autoHide presentation option), and tearing
+        // the windows down + back up mid-fade caused a visible flash on
+        // every shake. Resize-in-place handles both monitor add/remove and
+        // visibleFrame changes; rebuildWindows happens lazily via
+        // ensureWindows() when the screen set actually differs.
+        let currentIDs = Set(windows.keys)
+        let newIDs = Set(NSScreen.screens.map { screenID($0) })
+        if currentIDs != newIDs {
+            rebuildWindows()
+        } else {
+            for screen in NSScreen.screens {
+                if let w = windows[screenID(screen)] {
+                    w.setFrame(overlayFrame(for: screen), display: true)
+                }
+            }
+        }
         refreshCutouts(animated: false)
     }
 
@@ -86,10 +107,13 @@ final class OverlayManager {
         isVisible = visible
         if visible {
             ensureWindows()
+            // Apply cutouts BEFORE fading in. Otherwise the user sees a
+            // full-screen blur for one frame, then the focused-window
+            // cutout appears — visible as a brief jitter.
+            refreshCutouts(animated: false)
             for (_, w) in windows {
                 w.fadeIn(duration: animated ? settings.fadeDuration : 0)
             }
-            refreshCutouts(animated: animated)
         } else {
             for (_, w) in windows {
                 w.fadeOut(duration: animated ? settings.fadeDuration : 0)
@@ -167,6 +191,19 @@ final class OverlayManager {
             for e in entries where e.windowID != 0 { allIDs.insert(e.windowID) }
             w.setCutouts(cutouts, duration: animated ? settings.fadeDuration : 0)
         }
+        // Never raise our own windows (Settings / Onboarding). Otherwise every
+        // refresh re-raises them to screenSaver level, which on macOS flashes
+        // them forward in the z-order — visible as Settings popping in and
+        // out on every shake.
+        let ourPID = ProcessInfo.processInfo.processIdentifier
+        if !allIDs.isEmpty,
+           let arr = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] {
+            for d in arr {
+                guard let pid = d[kCGWindowOwnerPID as String] as? pid_t, pid == ourPID,
+                      let wid = d[kCGWindowNumber as String] as? CGWindowID else { continue }
+                allIDs.remove(wid)
+            }
+        }
         let raiseLevel = Int32(CGWindowLevelForKey(.screenSaverWindow))
         WindowRaiser.shared.setRaised(allIDs, level: raiseLevel)
     }
@@ -174,6 +211,7 @@ final class OverlayManager {
     struct WindowEntry {
         let windowID: CGWindowID
         let rect: CGRect
+        var pid: pid_t = 0
     }
 
     private func computePerScreenWindows() -> [CGDirectDisplayID: [WindowEntry]] {
@@ -201,6 +239,7 @@ final class OverlayManager {
             entries.append(CGEntry(windowID: wid, pid: pid, rect: cgToCocoa(r)))
         }
 
+        let ourPID = ProcessInfo.processInfo.processIdentifier
         let frontPID = NSWorkspace.shared.frontmostApplication?.processIdentifier ?? -1
         let pinnedIDs = Set(settings.pinnedBundleIDs)
         let pinnedPIDs: Set<pid_t> = {
@@ -234,7 +273,7 @@ final class OverlayManager {
                         picked.append(WindowEntry(windowID: wid, rect: cocoa))
                     }
                 }
-                if picked.isEmpty, let top = entries.first(where: { $0.rect.intersects(sf) }) {
+                if picked.isEmpty, let top = entries.first(where: { $0.pid != ourPID && $0.rect.intersects(sf) }) {
                     picked.append(WindowEntry(windowID: top.windowID, rect: top.rect))
                 }
             } else {
@@ -250,7 +289,7 @@ final class OverlayManager {
                     picked.append(WindowEntry(windowID: top.windowID, rect: top.rect))
                 }
                 if picked.isEmpty,
-                   let any = entries.first(where: { $0.rect.intersects(sf) }) {
+                   let any = entries.first(where: { $0.pid != ourPID && $0.rect.intersects(sf) }) {
                     picked.append(WindowEntry(windowID: any.windowID, rect: any.rect))
                 }
             }

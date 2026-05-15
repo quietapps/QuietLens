@@ -147,7 +147,7 @@ struct SettingsView: View {
                     .font(FL.T.body())
                     .foregroundStyle(isSel ? FL.C.text1(scheme) : FL.C.text2(scheme))
                 Spacer()
-                Text("⌘\(tab.shortcut.character)")
+                Text("⌘" + String(tab.shortcut.character))
                     .font(FL.T.mono())
                     .tracking(0.04)
                     .foregroundStyle(FL.C.text3(scheme))

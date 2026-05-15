@@ -7,23 +7,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
         WindowRaiser.shared.clearAll()
     }
 
-    private let aboveOverlayLevel = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.screenSaverWindow)) + 1)
+    // Settings/Onboarding stay at .normal level. Putting them above the
+    // overlay (screenSaver+1) used to keep them visible while the overlay was
+    // on, but it broke macOS Screenshot which then can't capture them.
+    // OverlayManager now treats our own windows as cutout targets, so they
+    // stay clear without needing a higher window level.
 
     @MainActor
-    func windowDidBecomeKey(_ notification: Notification) {
-        guard let w = notification.object as? NSWindow else { return }
-        if w === settingsWindow || w === onboardingWindow {
-            w.level = aboveOverlayLevel
-        }
-    }
+    func windowDidBecomeKey(_ notification: Notification) {}
 
     @MainActor
-    func windowDidResignKey(_ notification: Notification) {
-        guard let w = notification.object as? NSWindow else { return }
-        if w === settingsWindow || w === onboardingWindow {
-            w.level = .normal
-        }
-    }
+    func windowDidResignKey(_ notification: Notification) {}
 
     static private(set) var shared: AppDelegate!
 
@@ -215,9 +209,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
         quitItem.image = NSImage(systemSymbolName: "power", accessibilityDescription: nil)
         menu.addItem(quitItem)
 
-        statusItem.menu = menu
-        statusItem.button?.performClick(nil)
-        statusItem.menu = nil
+        // Pop the menu up directly under the status item. Don't assign
+        // `statusItem.menu` + `performClick`: that re-enters statusBarClicked
+        // while currentEvent is still .rightMouseUp, which calls back into
+        // showContextMenu, which calls performClick again — infinite recursion.
+        if let btn = statusItem.button {
+            let p = NSPoint(x: 0, y: btn.bounds.maxY + 4)
+            menu.popUp(positioning: nil, at: p, in: btn)
+        }
     }
 
     @MainActor @objc private func toggleFromMenu() { toggleOverlay() }
@@ -245,7 +244,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
 
     @MainActor
     func toggleOverlay() {
-        overlayManager.setEnabled(!overlayManager.isEnabled, animated: true)
+        let willEnable = !overlayManager.isEnabled
+        overlayManager.setEnabled(willEnable, animated: true)
+        if willEnable {
+            // Re-read the frontmost window so the overlay applies to the
+            // window the user is looking at right now, not the stale one.
+            windowTracker.refresh()
+            applyCurrentExclusion()
+        }
         applyAutoHide()
         updateStatusIcon()
     }
@@ -262,9 +268,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
             w.titleVisibility = .hidden
             w.isMovableByWindowBackground = false
             w.setContentSize(NSSize(width: 920, height: 640))
-            w.standardWindowButton(.closeButton)?.target = w
-            w.standardWindowButton(.closeButton)?.action = #selector(NSWindow.performClose(_:))
-            // Default normal level; raised above overlay only while key.
+            // Do NOT override the close button's target/action. The default
+            // already routes through the responder chain and closes the
+            // window. Setting target = w + action = performClose: causes
+            // infinite recursion: performClose simulates a click on the
+            // close button, which re-invokes performClose, which simulates
+            // another click… stack overflows in __CFStringAppendBytes when
+            // AppKit tries to log the runaway.
             w.level = .normal
             w.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
             w.delegate = self
