@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-FocusLens — native macOS menu bar app that dims/blurs every window except the focused one. Swift 5.9 + SwiftUI (settings) + AppKit (overlay windows). Min deployment macOS 14.0. Bundle ID `com.parththummar.FocusLens`. MIT licensed.
+Quiet Lens — native macOS menu bar app that dims/blurs every window except the focused one. Swift 5.9 + SwiftUI (settings) + AppKit (overlay windows). Min deployment macOS 14.0. Bundle ID `app.quiet.QuietLens`. MIT licensed.
 
 ## Build & run
 
@@ -18,16 +18,16 @@ Build / run / clean from CLI:
 
 ```bash
 # Build Debug
-xcodebuild -project FocusLens.xcodeproj -scheme FocusLens -configuration Debug -destination 'platform=macOS' build
+xcodebuild -project QuietLens.xcodeproj -scheme QuietLens -configuration Debug -destination 'platform=macOS' build
 
 # Build Release (produces signed .app with Assets.car bundled)
-xcodebuild -project FocusLens.xcodeproj -scheme FocusLens -configuration Release -destination 'platform=macOS' build
+xcodebuild -project QuietLens.xcodeproj -scheme QuietLens -configuration Release -destination 'platform=macOS' build
 
 # Clean
-xcodebuild -project FocusLens.xcodeproj -scheme FocusLens clean
+xcodebuild -project QuietLens.xcodeproj -scheme QuietLens clean
 ```
 
-Built `.app` lands in `~/Library/Developer/Xcode/DerivedData/FocusLens-*/Build/Products/{Debug,Release}/FocusLens.app`.
+Built `.app` lands in `~/Library/Developer/Xcode/DerivedData/QuietLens-*/Build/Products/{Debug,Release}/Quiet Lens.app`.
 
 No test target exists. No linter configured.
 
@@ -36,10 +36,10 @@ No test target exists. No linter configured.
 Icons are generated procedurally by a Swift script (no Sketch/Figma source). To rebuild them:
 
 ```bash
-swift /tmp/focuslens_icon.swift   # or run the script wherever you saved it
+swift /tmp/quietlens_icon.swift   # or run the script wherever you saved it
 ```
 
-The script renders 10 PNGs into `FocusLens/Resources/Assets.xcassets/AppIcon.appiconset/` at exact pixel sizes (16/32/64/128/256/512/1024 px). Uses `CGContext` directly — do **not** use `NSImage(size:)` which doubles to HiDPI pixels.
+The script renders 10 PNGs into `QuietLens/Resources/Assets.xcassets/AppIcon.appiconset/` at exact pixel sizes (16/32/64/128/256/512/1024 px). Uses `CGContext` directly — do **not** use `NSImage(size:)` which doubles to HiDPI pixels.
 
 ## Architecture overview
 
@@ -49,8 +49,8 @@ Three coordinated layers. Understanding the interaction is more important than a
 
 - **`WindowTracker`** — observes `NSWorkspace.didActivateApplication` + `AXObserver` notifications (`kAXFocusedWindowChanged`, etc.). Reads focused window via `AXUIElementCopyAttributeValue`. Falls back to 0.5s polling. Emits `FocusedWindowInfo` (pid, bundleID, frame, windowNumber, allAppFrames) via `onFocusedWindowChanged` callback.
 - **`ShakeDetector`** — 60Hz `Timer` polling `NSEvent.mouseLocation` (no Input Monitoring permission needed). 2D direction-reversal counting in a 0.6s sliding window. Triggers `onShake` or peek mode (when modifier held).
-- **`HotkeyManager`** — Carbon `RegisterEventHotKey` for global shortcuts. Three IDs: toggle (1), settings (2), exclude (3). Re-registers when `Notification.Name.focusLensShortcutChanged` posts.
-- **`AutomationHandler`** — routes `focuslens://{toggle|enable|disable|settings}` URL events. Apple Event handler installed in `AppDelegate`.
+- **`HotkeyManager`** — Carbon `RegisterEventHotKey` for global shortcuts. Three IDs: toggle (1), settings (2), exclude (3). Re-registers when `Notification.Name.quietLensShortcutChanged` posts.
+- **`AutomationHandler`** — routes `quietlens://{toggle|enable|disable|settings}` URL events. Apple Event handler installed in `AppDelegate`.
 
 ### 2. Overlay layer (`Overlay/` + `OverlayManager`)
 
@@ -65,12 +65,12 @@ Three coordinated layers. Understanding the interaction is more important than a
 `AppDelegate` is the singleton orchestrator (`AppDelegate.shared`). It:
 
 - Owns `OverlayManager`, `WindowTracker`, `ShakeDetector`, `HotkeyManager`, `AutomationHandler`.
-- Subscribes to `FocusLensSettings.shared.objectWillChange` and on each tick calls `refreshAppearance + refreshGeometry + windowTracker.refresh + applyAutoHide`. **This is how every settings toggle takes effect at runtime** — there's no per-setting handler.
+- Subscribes to `QuietLensSettings.shared.objectWillChange` and on each tick calls `refreshAppearance + refreshGeometry + windowTracker.refresh + applyAutoHide`. **This is how every settings toggle takes effect at runtime** — there's no per-setting handler.
 - Polls `AXIsProcessTrusted()` every 1.5s. On false→true flip, starts tracking, closes onboarding, and opens Settings (first-run welcome flow). On true→false, re-shows onboarding.
 
 ### Settings model (`Models/Settings.swift`)
 
-Class is **`FocusLensSettings`**, not `Settings` — the latter collides with SwiftUI's `Settings` scene. All properties `@Published` with `didSet` writing through to `UserDefaults.standard` (not a custom suite — using bundle ID as suite name was a former bug). `applyPreset()` runs on tint-preset change to sync hex fields.
+Class is **`QuietLensSettings`**, not `Settings` — the latter collides with SwiftUI's `Settings` scene. All properties `@Published` with `didSet` writing through to `UserDefaults.standard` (not a custom suite — using bundle ID as suite name was a former bug). `applyPreset()` runs on tint-preset change to sync hex fields.
 
 Enum types live alongside: `OverlayMode` (deep/ambient), `ShaderMode` (static/breathing/drift/pulse), `TintPreset` (12 curated gradient pairs), `ShakeModifier`, `MenuBarLeftClickAction`.
 
@@ -86,11 +86,11 @@ SwiftUI views in `Views/`. Sidebar nav drives a switch in `SettingsView.content`
 - **`TickSliderRow(icon, title, value, ticks, labels)`** — segmented capsule tick slider (used for shake sensitivity).
 - **`ColorCircleRow(hex, useSystem, label?)`** — Apple system-color circles + rainbow custom picker + "As System" toggle.
 
-The window itself is hosted by `AppDelegate.openSettings()` (not a SwiftUI `Scene`), so the `Settings { EmptyView() }` scene in `FocusLensApp` is just a placeholder to satisfy `App` protocol.
+The window itself is hosted by `AppDelegate.openSettings()` (not a SwiftUI `Scene`), so the `Settings { EmptyView() }` scene in `QuietLensApp` is just a placeholder to satisfy `App` protocol.
 
 ## Permissions gotcha (TCC + signature)
 
-macOS TCC binds Accessibility grants to **code signature hash**, not bundle ID. After each unsigned rebuild the signature changes → old TCC entry no longer matches → `AXIsProcessTrusted()` returns false even when System Settings still shows the checkbox. Fix: user removes + re-adds FocusLens in System Settings → Privacy & Security → Accessibility, OR sign with a stable Developer ID.
+macOS TCC binds Accessibility grants to **code signature hash**, not bundle ID. After each unsigned rebuild the signature changes → old TCC entry no longer matches → `AXIsProcessTrusted()` returns false even when System Settings still shows the checkbox. Fix: user removes + re-adds Quiet Lens in System Settings → Privacy & Security → Accessibility, OR sign with a stable Developer ID.
 
 The 1.5s poll in `AppDelegate.startAccessibilityPoll` exists specifically to handle this — when user fixes permission externally, app auto-recovers without restart. Onboarding shows the manual remove+re-add instructions verbatim.
 
@@ -98,17 +98,17 @@ The 1.5s poll in `AppDelegate.startAccessibilityPoll` exists specifically to han
 
 `project.yml` controls the generated Xcode project. Key bits:
 
-- `info.properties` becomes Info.plist — `LSUIElement: true`, URL scheme `focuslens`, `CFBundleIconName: AppIcon`, `NSAccessibilityUsageDescription`.
+- `info.properties` becomes Info.plist — `LSUIElement: true`, URL scheme `quietlens`, `CFBundleIconName: AppIcon`, `NSAccessibilityUsageDescription`.
 - `settings.base.ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon` is required or Assets.car won't bundle.
 - `ENABLE_APP_SANDBOX: NO` — accessibility API requires unsandboxed.
-- Signing: `CODE_SIGN_STYLE: Automatic`, no explicit team (Xcode picks Personal Team or paid). Bundle prefix `com.parththummar`.
+- Signing: `CODE_SIGN_STYLE: Automatic`, no explicit team (Xcode picks Personal Team or paid). Bundle prefix `app.quiet`.
 
 After editing `project.yml`, always run `xcodegen generate` before building.
 
 ## Reset state during development
 
 ```bash
-defaults delete com.parththummar.FocusLens   # wipe all saved settings
+defaults delete app.quiet.QuietLens   # wipe all saved settings
 ```
 
-If TCC permission seems "stuck" granted but app reports false, manually remove FocusLens from System Settings → Privacy & Security → Accessibility and re-add.
+If TCC permission seems "stuck" granted but app reports false, manually remove Quiet Lens from System Settings → Privacy & Security → Accessibility and re-add.
