@@ -1,6 +1,6 @@
 cask "focuslens" do
   version "1.0.2"
-  sha256 :no_check  # update after release.sh prints the actual hash
+  sha256 "4ce088d16d8a28d078a42561f4fae2d159b49ccf1ebca5b25f3d1acc31229ff1"
 
   url "https://github.com/parththummar/FocusLens/releases/download/#{version}/FocusLens-#{version}.zip",
       verified: "github.com/parththummar/FocusLens/"
@@ -18,16 +18,23 @@ cask "focuslens" do
 
   app "FocusLens.app"
 
-  # Build is not signed with an Apple Developer ID. Strip the quarantine
-  # extended attribute after install so Gatekeeper does not block launch.
+  # Build is not signed with an Apple Developer ID. Make the app launchable on
+  # any Mac out of the box:
+  #   1. Strip ALL extended attributes (not just com.apple.quarantine — newer
+  #      macOS versions also set com.apple.macl and com.apple.provenance that
+  #      can block launch).
+  #   2. Force-register the bundle with Launch Services so double-clicking from
+  #      Finder / Dock launches the real binary instead of silently failing.
   postflight do
     system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", "#{appdir}/FocusLens.app"],
+                   args: ["-cr", "#{appdir}/FocusLens.app"],
                    sudo: false
-  end
-
-  uninstall_postflight do
-    # nothing — app removal handled by Homebrew
+    system_command "/System/Library/Frameworks/CoreServices.framework/" \
+                   "Versions/A/Frameworks/LaunchServices.framework/" \
+                   "Versions/A/Support/lsregister",
+                   args: ["-f", "#{appdir}/FocusLens.app"],
+                   sudo: false,
+                   must_succeed: false
   end
 
   zap trash: [
@@ -39,14 +46,24 @@ cask "focuslens" do
   ]
 
   caveats <<~EOS
-    FocusLens is currently distributed unsigned. The quarantine attribute
-    is stripped automatically after install so Gatekeeper does not block it.
+    FocusLens is currently distributed unsigned. The post-install hook
+    strips Gatekeeper attributes automatically, but if the app refuses to
+    launch on a fresh Mac, do this once:
+
+      1. Open Finder → /Applications
+      2. Right-click FocusLens.app → Open
+      3. Click "Open" in the dialog
+      4. macOS remembers your choice for every future launch
+
+    Or run this in Terminal once after install:
+      xattr -cr /Applications/FocusLens.app
 
     FocusLens needs Accessibility access to detect which window is focused.
-    On first launch, grant access in System Settings → Privacy & Security → Accessibility.
+    On first launch, grant access in:
+      System Settings → Privacy & Security → Accessibility
 
-    Heads-up: after upgrading, you may need to remove + re-add FocusLens
-    in the Accessibility list because macOS binds permissions to the app's
-    code signature, which changes between unsigned builds.
+    After upgrading, you may need to remove + re-add FocusLens in the
+    Accessibility list because macOS binds permissions to the app's code
+    signature, which changes between unsigned builds.
   EOS
 end

@@ -119,9 +119,14 @@ xattr -dr com.apple.quarantine /Applications/FocusLens.app
 
 ### Heads-up about unsigned builds
 
+- The Homebrew cask strips every extended attribute and re-registers the bundle with Launch Services on install, so the app should launch on a clean Mac out of the box.
+- If a double-click does nothing on first launch, this is Gatekeeper silently blocking the unsigned binary. Fix it once:
+  1. Open Finder → `/Applications`
+  2. **Right-click** FocusLens.app → **Open**
+  3. Click **Open** in the warning dialog
+  4. macOS remembers your choice for every subsequent launch
 - After every new release, you may need to **remove + re-add FocusLens** in System Settings → Privacy & Security → Accessibility. macOS ties the permission to the app's code-signature hash, and unsigned builds change hash each time.
-- Right-click → Open works as a one-time bypass if `xattr` feels intimidating.
-- If Gatekeeper still blocks the app, open **System Settings → Privacy & Security**, scroll to the message about FocusLens, click **Open Anyway**.
+- If Gatekeeper still won't let the app run, open **System Settings → Privacy & Security**, scroll to the message about FocusLens, click **Open Anyway**.
 
 ## Updating
 
