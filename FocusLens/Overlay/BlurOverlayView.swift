@@ -66,22 +66,24 @@ final class BlurOverlayView: NSView {
         } else {
             backdropLayer.isHidden = true
             effect.isHidden = false
-            // Material picks blur strength. Stronger materials = heavier blur.
-            // .hudWindow ~20px, .underWindowBackground ~30px, .fullScreenUI ~50px,
-            // .menu ~60px (heaviest standard material).
-            switch radius {
-            case ..<10: effect.material = .hudWindow
-            case ..<25: effect.material = .underWindowBackground
-            case ..<40: effect.material = .fullScreenUI
-            default: effect.material = .menu
+            if isTinted {
+                // Tinted mode = light blur so the tint dominates, color-cast feel.
+                effect.material = .hudWindow
+                effect.alphaValue = 0.45
+            } else {
+                // Material picks blur strength. Stronger materials = heavier blur.
+                switch radius {
+                case ..<10: effect.material = .hudWindow
+                case ..<25: effect.material = .underWindowBackground
+                case ..<40: effect.material = .fullScreenUI
+                default: effect.material = .menu
+                }
+                effect.alphaValue = isAmbient ? 0.65 : 1.0
             }
-            // Keep effect at full alpha so blur is always strong.
-            // Mode dims blur slightly so Ambient feels lighter.
-            let modeMul: CGFloat = isAmbient ? 0.65 : 1.0
-            effect.alphaValue = CGFloat(modeMul)
         }
 
         let opacity = max(0.1, min(1.0, settings.overlayOpacity)) * (isTinted ? 1.2 : 1.0)
+        let tintCompositingFilter: String? = isTinted ? "multiplyBlendMode" : nil
 
         let useGradient = settings.gradientEnabled || isAmbient
         if useGradient {
@@ -107,10 +109,12 @@ final class BlurOverlayView: NSView {
                 gradientLayer.startPoint = CGPoint(x: 0.5 - dx, y: 0.5 - dy)
                 gradientLayer.endPoint = CGPoint(x: 0.5 + dx, y: 0.5 + dy)
             }
+            gradientLayer.compositingFilter = tintCompositingFilter
         } else {
             gradientLayer.isHidden = true
             tintLayer.isHidden = false
             tintLayer.backgroundColor = settings.effectiveTintColor.withAlphaComponent(opacity).cgColor
+            tintLayer.compositingFilter = tintCompositingFilter
         }
 
         if settings.grainIntensity > 0.01 {

@@ -1,6 +1,6 @@
 cask "focuslens" do
   version "1.0.2"
-  sha256 "4ce088d16d8a28d078a42561f4fae2d159b49ccf1ebca5b25f3d1acc31229ff1"
+  sha256 "e333c08f3f97440f0391b85596d43aa99e0d2afce3df9dfe2e9ee59bf894ea9b"
 
   url "https://github.com/parththummar/FocusLens/releases/download/#{version}/FocusLens-#{version}.zip",
       verified: "github.com/parththummar/FocusLens/"
