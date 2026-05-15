@@ -2,9 +2,27 @@ import AppKit
 import SwiftUI
 import Combine
 
-final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unchecked Sendable {
     @MainActor func applicationWillTerminate(_ notification: Notification) {
         WindowRaiser.shared.clearAll()
+    }
+
+    private let aboveOverlayLevel = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.screenSaverWindow)) + 1)
+
+    @MainActor
+    func windowDidBecomeKey(_ notification: Notification) {
+        guard let w = notification.object as? NSWindow else { return }
+        if w === settingsWindow || w === onboardingWindow {
+            w.level = aboveOverlayLevel
+        }
+    }
+
+    @MainActor
+    func windowDidResignKey(_ notification: Notification) {
+        guard let w = notification.object as? NSWindow else { return }
+        if w === settingsWindow || w === onboardingWindow {
+            w.level = .normal
+        }
     }
 
     static private(set) var shared: AppDelegate!
@@ -46,6 +64,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
         hotkeyManager.onToggle = { [weak self] in self?.toggleOverlay() }
         hotkeyManager.onOpenSettings = { [weak self] in self?.openSettings() }
         hotkeyManager.onToggleExclude = { [weak self] in self?.toggleExcludeCurrent() }
+        hotkeyManager.onTogglePin = { [weak self] in self?.togglePinCurrent() }
 
         evaluateAccessibility(promptIfMissing: false)
         startAccessibilityPoll()
@@ -203,6 +222,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
 
     @MainActor @objc private func toggleFromMenu() { toggleOverlay() }
     @MainActor @objc private func openSettingsFromMenu() { openSettings() }
+    @MainActor func togglePinCurrent() {
+        guard let id = windowTracker.currentApp?.bundleIdentifier else { return }
+        var list = FocusLensSettings.shared.pinnedBundleIDs
+        if let idx = list.firstIndex(of: id) { list.remove(at: idx) } else { list.append(id) }
+        FocusLensSettings.shared.pinnedBundleIDs = list
+    }
+
     @MainActor @objc func toggleExcludeCurrent() {
         guard let id = windowTracker.currentApp?.bundleIdentifier else { return }
         var list = FocusLensSettings.shared.excludedBundleIDs
@@ -231,11 +257,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
             let host = NSHostingController(rootView: view)
             let w = NSWindow(contentViewController: host)
             w.title = "FocusLens Settings"
-            w.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
+            w.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView, .resizable]
             w.titlebarAppearsTransparent = true
-            w.setContentSize(NSSize(width: 760, height: 560))
+            w.titleVisibility = .hidden
+            w.isMovableByWindowBackground = false
+            w.setContentSize(NSSize(width: 920, height: 640))
             w.standardWindowButton(.closeButton)?.target = w
             w.standardWindowButton(.closeButton)?.action = #selector(NSWindow.performClose(_:))
+            // Default normal level; raised above overlay only while key.
+            w.level = .normal
+            w.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            w.delegate = self
             w.center()
             w.isReleasedWhenClosed = false
             settingsWindow = w
@@ -261,11 +293,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
             })
             let host = NSHostingController(rootView: v)
             let w = NSWindow(contentViewController: host)
-            w.title = "Welcome to FocusLens"
-            w.styleMask = [.titled, .closable]
-            w.setContentSize(NSSize(width: 520, height: 400))
+            w.title = ""
+            w.styleMask = [.titled, .closable, .fullSizeContentView]
+            w.titlebarAppearsTransparent = true
+            w.titleVisibility = .hidden
+            w.isMovableByWindowBackground = false
+            w.setContentSize(NSSize(width: 620, height: 760))
             w.center()
             w.isReleasedWhenClosed = false
+            w.level = .normal
+            w.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            w.delegate = self
             onboardingWindow = w
         }
         NSApp.activate(ignoringOtherApps: true)
@@ -313,11 +351,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
         guard let btn = statusItem?.button else { return }
         let isOn = overlayManager?.isEnabled ?? false
         let excluded = isCurrentExcluded()
-        let ambient = FocusLensSettings.shared.overlayMode == .ambient
+        let mode = FocusLensSettings.shared.overlayMode
+        let dotEnabled = FocusLensSettings.shared.showIndicatorDot
 
         let state: MenuIconState
         if excluded { state = .excluded }
-        else if isOn && ambient { state = .ambient }
+        else if isOn && !dotEnabled { state = .off }
+        else if isOn && mode == .ambient { state = .ambient }
         else if isOn { state = .deep }
         else { state = .off }
 

@@ -9,47 +9,101 @@ struct OnboardingView: View {
     @State private var checkFailedMessage: String?
 
     var body: some View {
-        VStack(spacing: 14) {
-            Image(systemName: "circle.lefthalf.filled").font(.system(size: 56))
-            Text("Welcome to FocusLens").font(.title)
-            Text("FocusLens needs Accessibility access to detect which window you're focused on so it can dim everything else.")
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: 440)
-            if trusted {
-                Text("✓ Permission granted").foregroundStyle(.green)
-                Button("Continue") { onDone() }.buttonStyle(.borderedProminent)
-            } else {
-                Button("Open System Settings") { openAXSettings() }.buttonStyle(.borderedProminent)
-                Button("I've granted access") { recheck() }
+        ZStack {
+            WallpaperBackground()
+            VStack(spacing: FL.S.s5) {
+                Spacer().frame(height: FL.S.s7)
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable().interpolation(.high)
+                    .frame(width: 96, height: 96)
+                    .padding(FL.S.s4)
+                    .background(
+                        RoundedRectangle(cornerRadius: FL.R.cardLg, style: .continuous)
+                            .fill(.regularMaterial)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: FL.R.cardLg, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
+                    )
+                    .shadow(color: .black.opacity(0.25), radius: 30, y: 12)
+
+                Text("Welcome to FocusLens").font(FL.T.display())
+                Text("Dim everything except the window you're working in. FocusLens needs Accessibility access to detect which window is focused.")
+                    .font(FL.T.bodyR())
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 460)
+
+                HStack(spacing: 8) {
+                    Circle().fill(trusted ? FL.C.green : FL.C.orange).frame(width: 8, height: 8)
+                        .shadow(color: (trusted ? FL.C.green : FL.C.orange).opacity(0.7), radius: 4)
+                    Text(trusted ? "Accessibility · Granted" : "Accessibility · Not granted")
+                        .font(FL.T.body())
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, FL.S.s3).padding(.vertical, 6)
+                .background(
+                    Capsule().fill(.thinMaterial)
+                )
+
+                HStack(spacing: 8) {
+                    if trusted {
+                        PrimaryButton(title: "Continue", icon: "arrow.right") { onDone() }
+                    } else {
+                        PrimaryButton(title: "Open System Settings", icon: "gear") { openAXSettings() }
+                        GhostButton(title: "I've granted access", icon: "checkmark") { recheck() }
+                    }
+                }
+
                 if let msg = checkFailedMessage {
-                    Text(msg).font(.callout).foregroundStyle(.orange).multilineTextAlignment(.center).frame(maxWidth: 440)
+                    Text(msg)
+                        .font(FL.T.bodyR())
+                        .foregroundStyle(FL.C.orange)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 460)
                 }
-                Divider().padding(.vertical, 4)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Already granted but still not working?").font(.headline)
-                    Text("macOS ties Accessibility permission to the app's code signature. After rebuilding the app, the old entry no longer matches. Fix:")
-                        .font(.callout).foregroundStyle(.secondary)
-                    Text("1. Open System Settings → Privacy & Security → Accessibility")
-                    Text("2. Select FocusLens and click the – button to remove it")
-                    Text("3. Click + and add FocusLens again (or drag from /Applications)")
-                    Text("4. Toggle it ON")
+
+                if !trusted {
+                    GlassPanel {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Troubleshooting").font(FL.T.title())
+                            stepRow(1, "Open System Settings → Privacy & Security → Accessibility")
+                            stepRow(2, "Find FocusLens and click the − button to remove it")
+                            stepRow(3, "Click + and add FocusLens.app from /Applications")
+                            stepRow(4, "Toggle FocusLens ON in the list")
+                        }
+                        .padding(FL.S.s4)
+                    }
+                    .frame(maxWidth: 520)
                 }
-                .font(.callout)
-                .frame(maxWidth: 440, alignment: .leading)
+
+                Spacer()
             }
+            .padding(FL.S.s7)
         }
-        .padding(28)
+        .frame(width: 620, height: 760)
         .onAppear {
             timer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { _ in
                 trusted = AXIsProcessTrusted()
                 if trusted { timer?.invalidate() }
             }
         }
+        .onDisappear { timer?.invalidate() }
         .onChange(of: trusted) { _, newValue in
             if newValue { onDone() }
         }
-        .onDisappear { timer?.invalidate() }
+    }
+
+    private func stepRow(_ n: Int, _ text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text("\(n)")
+                .font(FL.T.caption())
+                .frame(width: 22, height: 22)
+                .background(Circle().fill(FL.C.accentSoft))
+                .foregroundStyle(FL.C.accent)
+            Text(text).font(FL.T.body())
+            Spacer()
+        }
     }
 
     private func recheck() {
@@ -60,7 +114,7 @@ struct OnboardingView: View {
             checkFailedMessage = nil
             onDone()
         } else {
-            checkFailedMessage = "macOS still reports access not granted. The app's code signature likely changed since you granted permission. Remove FocusLens from the Accessibility list and add it again."
+            checkFailedMessage = "macOS still reports access not granted. Remove FocusLens from the Accessibility list and add it again, then click below."
         }
     }
 

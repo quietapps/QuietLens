@@ -10,20 +10,26 @@
 		0F2716E87BA10CDCA5CA2E49 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1EEFAE2850C30E3C56D372D2 /* Assets.xcassets */; };
 		31A0B33B0FBD4331BA063482 /* BlurOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BAE5AD8182875D544AA4A6 /* BlurOverlayView.swift */; };
 		350AA24A2DFA08DBA8020472 /* FocusLensApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82A7828086E2F67EF79C9BFC /* FocusLensApp.swift */; };
+		3742A59C42032F7E1DA03DC6 /* GestureScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1CAA528A87D607BB787F0E /* GestureScreen.swift */; };
 		5C2507215C753EAE4622D18D /* OverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF45B63618B259A573705BC /* OverlayWindow.swift */; };
-		6C1A7E3F41BDF37C14208222 /* RulesSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29D6B400FEA99D11EFB73C0F /* RulesSettings.swift */; };
 		82D43817F8139C382D99F4A2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 388DD3AEA35733DCF57B0BD4 /* AppDelegate.swift */; };
 		93F59480EF2FE763576452C0 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80EE2186B42A95F304CAFC6A /* SettingsView.swift */; };
+		A03A99B1C1C80F43FAEDE8C7 /* GlassComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = C765E26A7A0DBF1B2BF93B78 /* GlassComponents.swift */; };
 		A376187346EE129145199E26 /* iCloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620CE65335D25BC8B35AD0B6 /* iCloudSync.swift */; };
 		AA71E73C40B163FF367A8E73 /* WindowRaiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E1FEE3BEC2A7B7B40153B6D /* WindowRaiser.swift */; };
-		B263120A37B39ACE63832A77 /* AppearanceSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F19E8456D51D88FA1BBCCBD7 /* AppearanceSettings.swift */; };
 		B2AA55C0D290164B08BAC5A0 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 276B5068780D175A541B6E3D /* HotkeyManager.swift */; };
+		D0E9565D8B873B0C0C2CD059 /* GeneralScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = D373D868A100C15964E990C2 /* GeneralScreen.swift */; };
 		D167173CE801701D3D4220C7 /* GestureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2E582C474345FA2CB0539D /* GestureSettings.swift */; };
 		D67A3122F302F07C09B970FF /* ExcludedApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A6995DCDFF32018868EC36 /* ExcludedApp.swift */; };
 		D72588214B7FC4A1F39F4229 /* AutomationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE4EA5AC154368DFEBB085A0 /* AutomationHandler.swift */; };
 		D926D279FDB3A23A34632C36 /* OverlayManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A83719E2EBA1AF5A7C01718 /* OverlayManager.swift */; };
 		E4670AFD0F0EFB44C61186DA /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E02A0522CEFC5E74CE3D266F /* OnboardingView.swift */; };
+		EAB8DB62AF304FB34E4F71A4 /* RulesScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7106657CCB874325262B1347 /* RulesScreen.swift */; };
+		EF1E3D005318AE17FAD20EC4 /* AboutScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DDFDA3B4BA0C095E7D05563 /* AboutScreen.swift */; };
 		F11FE38C08764FDB07D58741 /* WindowTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67A09196781F350091530CE0 /* WindowTracker.swift */; };
+		F514B128DC7C956271003817 /* AppearanceScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F0D239D9DC8973A1267AD91 /* AppearanceScreen.swift */; };
+		F7532E588CFF709C9EB90424 /* LivePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B1B27026CEF95C7922AADB0 /* LivePreview.swift */; };
+		FA53798D84A8F81BD7D05A68 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839DFD34BC9F0BA1A6F9F4D2 /* DesignSystem.swift */; };
 		FCE1FC910FA231C8C7EEDCCC /* CutoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C845AFA06D188F37BC3D2A13 /* CutoutView.swift */; };
 		FD6330B144C8ED6C5709FB72 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF553C492A863985C51BDCBA /* Settings.swift */; };
 		FFE0E0C4E635E466D85F843F /* ShakeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE3256F1C033344DE6ECA45D /* ShakeDetector.swift */; };
@@ -37,20 +43,26 @@
 		1EEFAE2850C30E3C56D372D2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2429B902AB165FC1BFDA7EDE /* FocusLens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FocusLens.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		276B5068780D175A541B6E3D /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
-		29D6B400FEA99D11EFB73C0F /* RulesSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RulesSettings.swift; sourceTree = "<group>"; };
 		388DD3AEA35733DCF57B0BD4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		3B1B27026CEF95C7922AADB0 /* LivePreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivePreview.swift; sourceTree = "<group>"; };
 		620CE65335D25BC8B35AD0B6 /* iCloudSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudSync.swift; sourceTree = "<group>"; };
 		67A09196781F350091530CE0 /* WindowTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowTracker.swift; sourceTree = "<group>"; };
+		6F0D239D9DC8973A1267AD91 /* AppearanceScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceScreen.swift; sourceTree = "<group>"; };
+		7106657CCB874325262B1347 /* RulesScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RulesScreen.swift; sourceTree = "<group>"; };
 		80EE2186B42A95F304CAFC6A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		82A7828086E2F67EF79C9BFC /* FocusLensApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusLensApp.swift; sourceTree = "<group>"; };
+		839DFD34BC9F0BA1A6F9F4D2 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		9DDFDA3B4BA0C095E7D05563 /* AboutScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutScreen.swift; sourceTree = "<group>"; };
 		A1BAE5AD8182875D544AA4A6 /* BlurOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlurOverlayView.swift; sourceTree = "<group>"; };
 		AE4EA5AC154368DFEBB085A0 /* AutomationHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomationHandler.swift; sourceTree = "<group>"; };
 		AF2E582C474345FA2CB0539D /* GestureSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureSettings.swift; sourceTree = "<group>"; };
+		C765E26A7A0DBF1B2BF93B78 /* GlassComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassComponents.swift; sourceTree = "<group>"; };
 		C845AFA06D188F37BC3D2A13 /* CutoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CutoutView.swift; sourceTree = "<group>"; };
+		D373D868A100C15964E990C2 /* GeneralScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralScreen.swift; sourceTree = "<group>"; };
 		DE3256F1C033344DE6ECA45D /* ShakeDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShakeDetector.swift; sourceTree = "<group>"; };
 		DF553C492A863985C51BDCBA /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
 		E02A0522CEFC5E74CE3D266F /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
-		F19E8456D51D88FA1BBCCBD7 /* AppearanceSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceSettings.swift; sourceTree = "<group>"; };
+		EA1CAA528A87D607BB787F0E /* GestureScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureScreen.swift; sourceTree = "<group>"; };
 		FCF45B63618B259A573705BC /* OverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayWindow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -66,10 +78,16 @@
 		3554552581A70A56C9B82656 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				F19E8456D51D88FA1BBCCBD7 /* AppearanceSettings.swift */,
+				9DDFDA3B4BA0C095E7D05563 /* AboutScreen.swift */,
+				6F0D239D9DC8973A1267AD91 /* AppearanceScreen.swift */,
+				839DFD34BC9F0BA1A6F9F4D2 /* DesignSystem.swift */,
+				D373D868A100C15964E990C2 /* GeneralScreen.swift */,
+				EA1CAA528A87D607BB787F0E /* GestureScreen.swift */,
 				AF2E582C474345FA2CB0539D /* GestureSettings.swift */,
+				C765E26A7A0DBF1B2BF93B78 /* GlassComponents.swift */,
+				3B1B27026CEF95C7922AADB0 /* LivePreview.swift */,
 				E02A0522CEFC5E74CE3D266F /* OnboardingView.swift */,
-				29D6B400FEA99D11EFB73C0F /* RulesSettings.swift */,
+				7106657CCB874325262B1347 /* RulesScreen.swift */,
 				80EE2186B42A95F304CAFC6A /* SettingsView.swift */,
 			);
 			path = Views;
@@ -217,19 +235,25 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EF1E3D005318AE17FAD20EC4 /* AboutScreen.swift in Sources */,
 				82D43817F8139C382D99F4A2 /* AppDelegate.swift in Sources */,
-				B263120A37B39ACE63832A77 /* AppearanceSettings.swift in Sources */,
+				F514B128DC7C956271003817 /* AppearanceScreen.swift in Sources */,
 				D72588214B7FC4A1F39F4229 /* AutomationHandler.swift in Sources */,
 				31A0B33B0FBD4331BA063482 /* BlurOverlayView.swift in Sources */,
 				FCE1FC910FA231C8C7EEDCCC /* CutoutView.swift in Sources */,
+				FA53798D84A8F81BD7D05A68 /* DesignSystem.swift in Sources */,
 				D67A3122F302F07C09B970FF /* ExcludedApp.swift in Sources */,
 				350AA24A2DFA08DBA8020472 /* FocusLensApp.swift in Sources */,
+				D0E9565D8B873B0C0C2CD059 /* GeneralScreen.swift in Sources */,
+				3742A59C42032F7E1DA03DC6 /* GestureScreen.swift in Sources */,
 				D167173CE801701D3D4220C7 /* GestureSettings.swift in Sources */,
+				A03A99B1C1C80F43FAEDE8C7 /* GlassComponents.swift in Sources */,
 				B2AA55C0D290164B08BAC5A0 /* HotkeyManager.swift in Sources */,
+				F7532E588CFF709C9EB90424 /* LivePreview.swift in Sources */,
 				E4670AFD0F0EFB44C61186DA /* OnboardingView.swift in Sources */,
 				D926D279FDB3A23A34632C36 /* OverlayManager.swift in Sources */,
 				5C2507215C753EAE4622D18D /* OverlayWindow.swift in Sources */,
-				6C1A7E3F41BDF37C14208222 /* RulesSettings.swift in Sources */,
+				EAB8DB62AF304FB34E4F71A4 /* RulesScreen.swift in Sources */,
 				FD6330B144C8ED6C5709FB72 /* Settings.swift in Sources */,
 				93F59480EF2FE763576452C0 /* SettingsView.swift in Sources */,
 				FFE0E0C4E635E466D85F843F /* ShakeDetector.swift in Sources */,
@@ -277,7 +301,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -300,7 +324,7 @@
 				INFOPLIST_KEY_CFBundleName = FocusLens;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -364,7 +388,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -381,7 +405,7 @@
 				INFOPLIST_KEY_CFBundleName = FocusLens;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

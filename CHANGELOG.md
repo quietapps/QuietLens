@@ -4,6 +4,48 @@ All notable changes to FocusLens are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] — 2026-05-15
+
+**Build 3** · Liquid Glass redesign, live preview, settings search, third overlay mode, stronger real-world blur.
+
+### Added
+- **Liquid Glass design system** — settings UI rebuilt around the macOS 26-inspired Liquid Glass spec from the bundled design handoff. Five-layer material hierarchy (wallpaper → chrome → panel → control → overlay), `.ultraThinMaterial` backdrops with low-opacity tints that let the wallpaper bleed through, specular top-edge highlight strokes instead of drop shadows. New token sheet `DesignSystem.swift` + primitive kit `GlassComponents.swift` (`GlassPanel`, `SettingsRow`, `GlassSwitch`, `GlassSlider`, `GlassSegmented`, `GlassPicker`, `IconTile`, `Callout`, `PageHeader`, `SectionLabel`, `Kbd`, `GhostButton`, `PrimaryButton`, `DangerCircleButton`, `ColorSwatch`).
+- **Decorative wallpaper background** with two soft accent orbs (purple top-left, pink bottom-right) that refract through the glass panels.
+- **Live preview canvas** on the Appearance tab — 200 px scene with a pastel diagonal wallpaper + four faux apps (Mail, Terminal mono, Notes, Messages) + a focused white "Safari" window on top. Reacts in real time to **blur**, **opacity**, **tint**, **gradient + angle**, **grain**, **grayscale**, **edge glow + halo intensity**, **shader mode + speed**. The background apps blur with the radius slider so you can see exactly what the real overlay will do.
+- **Shader animations** in the preview — Breathing (opacity 1.0 ↔ 0.75 over 3s), Pulse (scale 1.0 ↔ 1.02 over 1.4s), Drift (xy translation over 7s), Static (no motion). All scale to the speed slider.
+- **Settings search** in the sidebar (⌘K to focus) — filters visible cards by keyword across every screen.
+- **Keyboard navigation** — ⌘1–⌘5 switch tabs (General / Appearance / Gestures / Rules / About).
+- **Third overlay mode: Tinted** — solid color wash with light blur, sitting between Deep and Ambient. Mode picker is a three-tile selector with status-dot accents (blue / purple / pink) and a description per tile.
+- **"Pin current window" global shortcut** — fourth hotkey ID alongside Toggle / Settings / Exclude. Toggles the frontmost app's bundle ID in the pinned list.
+- **Color Scheme override** in General (System / Light / Dark) — forces the FocusLens UI to a specific scheme regardless of macOS preference.
+- **Show indicator dot** toggle — when off, the menu bar icon reads as a generic hollow ring even when the overlay is active (low-key mode).
+- Welcome / Onboarding screen rebuilt — 96 px glass icon tile, accent radial glow, status pill, primary + ghost button pair, numbered-chip troubleshooting panel.
+- **Coming-soon badges** on every UI element that's wired in the UI but not yet driving real behavior — Auto-enable on focus, iCloud Settings Sync, Check for Updates, Cursor halo, Focus on hover, Auto-disable after. Each is visually dimmed and non-interactive with a small "COMING SOON" accent pill next to the title.
+
+### Changed
+- **Settings window**: 920×640 default size, `.fullSizeContentView` with transparent titlebar (titlebar text hidden), full-bleed wallpaper underneath. ⌘W closes Settings.
+- **Window level**: settings + onboarding windows sit at `.normal` level by default. When key, they auto-raise to `screenSaverWindow + 1` so dropdown menus and pickers appear above the overlay; when you switch to another app the window auto-drops back to `.normal` so it doesn't pin itself above everything.
+- **Sliders** are now built from scratch on a custom `DragGesture` over the visible 4 px track + 18 px white thumb + accent fill + accent glow. Click-to-position works, drag works, hit area covers the full row. `isMovableByWindowBackground` is now off so window-drag doesn't intercept slider gestures.
+- **Sensitivity** is now a 5-segment level bar (Very Low → Very High) with capsules that fill left-to-right with accent + glow as the level rises.
+- **Sidebar**: 30 px brand icon + "FocusLens" label + version-uppercase caption, accent-tinted active item with glass background + edge-top highlight, ⌘1–⌘5 hints per row, persistent search field with `⌘K` chip at the bottom.
+- **Color picker**: now a 15-swatch grid (rainbow custom picker + brights: Purple/Cyan/Magenta/Orange/Yellow/Green/Blue + darks: Indigo/Navy/Forest/Crimson/Slate/Charcoal + neutrals White/Black). Adaptive grid wraps on narrow widths. Selected swatch shows a 1.5 px solid ring offset 4 px outside the swatch.
+- **"Menu Icon click action"** (renamed from "Left-click action") and **"Color Scheme"** are now segmented (radio-style) controls so they don't need to open a popover.
+- **Real overlay blur strength** boosted — `NSVisualEffectView.alphaValue` no longer modulated against radius (which was making the blur invisible at low/mid radii). Material tiers now scale across the full 0–50 range: `.hudWindow` → `.underWindowBackground` → `.fullScreenUI` → `.menu` (heaviest). Tint layer continues to handle the opacity slider.
+- **About card** redesigned with a 120 px glass icon tile, version pill (green dot · `Version 1.0.2`), tagline, links card (Website / License MIT / Report issue), credits card.
+
+### Technical
+- New files: `DesignSystem.swift`, `GlassComponents.swift`, `LivePreview.swift`, `GeneralScreen.swift`, `AppearanceScreen.swift`, `GestureScreen.swift`, `RulesScreen.swift`, `AboutScreen.swift`.
+- Removed: `AppearanceSettings.swift`, `RulesSettings.swift` (replaced by Screen-prefixed equivalents). `GestureSettings.swift` slimmed to host the `ShortcutRecorder` static helpers + `KeyCaptureView` used by the new `ShortcutRow`.
+- `FocusLensSettings` adds `autoEnableOnFocus`, `showIndicatorDot`, `colorSchemePref`, `cursorHalo`, `focusOnHover`, `autoDisableAfter`, `pinShortcutKey`/`pinShortcutMods`. All seven mirror through `iCloudSync` along with the existing keys.
+- `HotkeyManager` adds a fourth hotkey ID (pin current window) and routes it via `AppDelegate.togglePinCurrent()`.
+- `OverlayMode` extended with `.tinted` — `BlurOverlayView` now respects three modes (deep / ambient / tinted) with mode-specific tint blend modes (`.multiply` for tinted).
+- Menu bar icon respects `showIndicatorDot` — falls back to the off-state ring when the dot is disabled even while overlay is enabled.
+- `AppDelegate` adopts `NSWindowDelegate`; `windowDidBecomeKey` / `windowDidResignKey` toggle settings + onboarding window level between `.normal` and `screenSaverWindow + 1`.
+- Keyboard event monitor (`NSEvent.addLocalMonitorForEvents`) bound for ⌘1–⌘5 and ⌘K so navigation works regardless of focus inside the SwiftUI hierarchy.
+- Welcome window resized to 620×760 to host the new layout.
+
+---
+
 ## [1.0.1] — 2026-05-14
 
 **Build 2** · Pinned windows, iCloud sync, edge glow, custom backdrop.
@@ -111,6 +153,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
-[Unreleased]: https://github.com/parththummar/FocusLens/compare/1.0.1...HEAD
+[Unreleased]: https://github.com/parththummar/FocusLens/compare/1.0.2...HEAD
+[1.0.2]: https://github.com/parththummar/FocusLens/releases/tag/1.0.2
 [1.0.1]: https://github.com/parththummar/FocusLens/releases/tag/1.0.1
 [1.0.0]: https://github.com/parththummar/FocusLens/releases/tag/1.0.0

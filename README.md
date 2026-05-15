@@ -30,9 +30,22 @@ Inspired by [Monocle](https://iamdk.gumroad.com/l/monocle-elegant-macos-window-b
 
 ## Features
 
-### Two focus modes
-- **Deep** — full-screen frosted-glass dim, heavy tint everywhere except your active window
+### Three focus modes
+- **Deep** — full-screen frosted-glass dim, heavy tint + strong real `NSVisualEffectView` blur everywhere except your active window
 - **Ambient** — subtle vertical-fade gradient, cinematic backdrop instead of full coverage
+- **Tinted** — solid color wash with `.multiply` blend, lighter blur, between Deep and Ambient
+
+### Liquid Glass Settings UI
+- macOS 26-inspired material hierarchy — wallpaper → chrome → panel → control → overlay
+- Real `.ultraThinMaterial` backdrops let the colorful wallpaper refract through every panel
+- **Live preview canvas** on the Appearance tab — a faux desktop with four background apps + a focused Safari window. Drag any slider (blur, opacity, tint, gradient, grain, edge-glow halo, shader speed) and the scene reacts frame-by-frame so you can dial in your look without toggling the real overlay
+- **Settings search** (⌘K) — filters cards by keyword across every screen
+- **⌘1–⌘5** jump between tabs
+- Sidebar with brand mark, version label, accent-tinted active item, persistent search field with `⌘K` chip
+- Color Scheme override (System / Light / Dark) for the app itself
+- 15 tint swatches — brights (Purple, Cyan, Magenta, Orange, Yellow, Green, Blue) + darks (Indigo, Navy, Forest, Crimson, Slate, Charcoal) + neutrals (White, Black) + rainbow custom picker
+- 5-segment sensitivity bar for shake (Very Low → Very High)
+- Custom drag-based sliders with accent fill + glow that respond to both click-to-position and live drag
 
 ### Real visual control
 - Variable blur radius **0–50** (continuous slider)
@@ -58,7 +71,8 @@ Inspired by [Monocle](https://iamdk.gumroad.com/l/monocle-elegant-macos-window-b
 ### Gestures & shortcuts
 - **Shake to toggle** — wiggle the cursor in any direction (2D detection, 60 Hz polling, no Input Monitoring permission required)
 - **Shake-to-peek** — hold ⇧/⌥/⌘ (configurable) + shake to temporarily reveal everything
-- Three global hotkeys with full F1–F12 + number-row support: **toggle overlay**, **open settings**, **exclude current app**
+- 5-segment sensitivity bar (Very Low → Very High) with live label
+- Four global hotkeys with full F1–F12 + number-row support: **toggle overlay**, **open settings**, **exclude current app**, **pin current window**
 
 ### Rules
 - Exclude any app from the overlay (file picker or running-app menu)
@@ -286,7 +300,17 @@ PRs welcome. Before opening one:
 
 ## Roadmap
 
-- [ ] Sparkle auto-updater
+The Settings UI already shows the following — marked **COMING SOON** in-app, badge + disabled controls — so you can see the shape of the feature before the behavior lands:
+
+- [ ] **Auto-enable on focus** — turn the overlay on the moment you click into any window
+- [ ] **iCloud Settings Sync** — mirror your config across Macs (UI + bridge code shipped; needs paid Apple Developer entitlement to activate)
+- [ ] **Auto-disable after** — turn the overlay off after an idle period (Never / 5 / 10 / 30 min / 1 h)
+- [ ] **Cursor halo** — subtle ring around the cursor
+- [ ] **Focus on hover** — switch focus when you hover a window
+- [ ] **Check for Updates** — manual update check + Sparkle auto-updater
+
+Beyond the in-app placeholders:
+
 - [ ] Per-app overlay profiles (different blur/tint per excluded-or-included app)
 - [ ] Custom Metal shader for true variable blur (free of `NSVisualEffectView` material constraints)
 - [ ] Localization (PRs welcome)

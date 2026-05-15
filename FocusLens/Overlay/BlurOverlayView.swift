@@ -50,6 +50,7 @@ final class BlurOverlayView: NSView {
     func apply(settings: FocusLensSettings) {
         let radius = max(0, min(50, settings.blurRadius))
         let isAmbient = settings.overlayMode == .ambient
+        let isTinted = settings.overlayMode == .tinted
 
         CATransaction.begin()
         CATransaction.setDisableActions(true)
@@ -65,17 +66,22 @@ final class BlurOverlayView: NSView {
         } else {
             backdropLayer.isHidden = true
             effect.isHidden = false
+            // Material picks blur strength. Stronger materials = heavier blur.
+            // .hudWindow ~20px, .underWindowBackground ~30px, .fullScreenUI ~50px,
+            // .menu ~60px (heaviest standard material).
             switch radius {
-            case ..<15: effect.material = .popover
-            case ..<35: effect.material = .windowBackground
-            default: effect.material = .hudWindow
+            case ..<10: effect.material = .hudWindow
+            case ..<25: effect.material = .underWindowBackground
+            case ..<40: effect.material = .fullScreenUI
+            default: effect.material = .menu
             }
-            let scale = (radius - 0.5) / 49.5
-            let baseAlpha = 0.3 + 0.7 * scale
-            effect.alphaValue = CGFloat(isAmbient ? baseAlpha * 0.4 : baseAlpha)
+            // Keep effect at full alpha so blur is always strong.
+            // Mode dims blur slightly so Ambient feels lighter.
+            let modeMul: CGFloat = isAmbient ? 0.65 : 1.0
+            effect.alphaValue = CGFloat(modeMul)
         }
 
-        let opacity = max(0.1, min(1.0, settings.overlayOpacity))
+        let opacity = max(0.1, min(1.0, settings.overlayOpacity)) * (isTinted ? 1.2 : 1.0)
 
         let useGradient = settings.gradientEnabled || isAmbient
         if useGradient {

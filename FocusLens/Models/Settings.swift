@@ -53,9 +53,52 @@ enum TintPreset: String, CaseIterable, Identifiable {
 }
 
 enum OverlayMode: String, CaseIterable, Identifiable {
-    case deep, ambient
+    case deep, ambient, tinted
     var id: String { rawValue }
     var label: String { rawValue.capitalized }
+    var summary: String {
+        switch self {
+        case .deep: return "Full coverage"
+        case .ambient: return "Subtle gradient"
+        case .tinted: return "Color wash"
+        }
+    }
+    var dotColor: NSColor {
+        switch self {
+        case .deep: return .systemBlue
+        case .ambient: return .systemPurple
+        case .tinted: return .systemPink
+        }
+    }
+}
+
+enum ColorSchemePref: String, CaseIterable, Identifiable {
+    case system, light, dark
+    var id: String { rawValue }
+    var label: String { rawValue.capitalized }
+}
+
+enum AutoDisableAfter: String, CaseIterable, Identifiable {
+    case never, fiveMin = "5min", tenMin = "10min", thirtyMin = "30min", oneHour = "1h"
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .never: return "Never"
+        case .fiveMin: return "5 min"
+        case .tenMin: return "10 min"
+        case .thirtyMin: return "30 min"
+        case .oneHour: return "1 hour"
+        }
+    }
+    var seconds: TimeInterval? {
+        switch self {
+        case .never: return nil
+        case .fiveMin: return 300
+        case .tenMin: return 600
+        case .thirtyMin: return 1800
+        case .oneHour: return 3600
+        }
+    }
 }
 
 enum BackdropMode: String, CaseIterable, Identifiable {
@@ -97,6 +140,14 @@ final class FocusLensSettings: ObservableObject {
 
     @Published var launchAtLogin: Bool { didSet { set(launchAtLogin, "launchAtLogin"); applyLaunchAtLogin() } }
     @Published var menuBarLeftClick: MenuBarLeftClickAction { didSet { set(menuBarLeftClick.rawValue, "menuBarLeftClick") } }
+    @Published var autoEnableOnFocus: Bool { didSet { set(autoEnableOnFocus, "autoEnableOnFocus") } }
+    @Published var showIndicatorDot: Bool { didSet { set(showIndicatorDot, "showIndicatorDot") } }
+    @Published var colorSchemePref: ColorSchemePref { didSet { set(colorSchemePref.rawValue, "colorSchemePref") } }
+    @Published var cursorHalo: Bool { didSet { set(cursorHalo, "cursorHalo") } }
+    @Published var focusOnHover: Bool { didSet { set(focusOnHover, "focusOnHover") } }
+    @Published var autoDisableAfter: AutoDisableAfter { didSet { set(autoDisableAfter.rawValue, "autoDisableAfter") } }
+    @Published var pinShortcutKey: UInt16? { didSet { defaults.set(pinShortcutKey.map { Int($0) }, forKey: "pinShortcutKey") } }
+    @Published var pinShortcutMods: UInt { didSet { defaults.set(pinShortcutMods, forKey: "pinShortcutMods") } }
 
     @Published var overlayMode: OverlayMode { didSet { set(overlayMode.rawValue, "overlayMode") } }
     @Published var tintPreset: TintPreset { didSet { set(tintPreset.rawValue, "tintPreset"); applyPreset() } }
@@ -141,6 +192,14 @@ final class FocusLensSettings: ObservableObject {
         let d = UserDefaults.standard
         launchAtLogin = d.bool(forKey: "launchAtLogin")
         menuBarLeftClick = MenuBarLeftClickAction(rawValue: d.string(forKey: "menuBarLeftClick") ?? "") ?? .toggleOverlay
+        autoEnableOnFocus = d.bool(forKey: "autoEnableOnFocus")
+        showIndicatorDot = d.object(forKey: "showIndicatorDot") as? Bool ?? true
+        colorSchemePref = ColorSchemePref(rawValue: d.string(forKey: "colorSchemePref") ?? "") ?? .system
+        cursorHalo = d.bool(forKey: "cursorHalo")
+        focusOnHover = d.bool(forKey: "focusOnHover")
+        autoDisableAfter = AutoDisableAfter(rawValue: d.string(forKey: "autoDisableAfter") ?? "") ?? .never
+        pinShortcutKey = (d.object(forKey: "pinShortcutKey") as? Int).flatMap { UInt16(exactly: $0) }
+        pinShortcutMods = UInt(d.integer(forKey: "pinShortcutMods"))
         overlayMode = OverlayMode(rawValue: d.string(forKey: "overlayMode") ?? "") ?? .deep
         tintPreset = TintPreset(rawValue: d.string(forKey: "tintPreset") ?? "") ?? .midnight
         useSystemTint = d.bool(forKey: "useSystemTint")
@@ -185,6 +244,16 @@ final class FocusLensSettings: ObservableObject {
 
     func reload() {
         let d = defaults
+        launchAtLogin = d.bool(forKey: "launchAtLogin")
+        menuBarLeftClick = MenuBarLeftClickAction(rawValue: d.string(forKey: "menuBarLeftClick") ?? "") ?? .toggleOverlay
+        autoEnableOnFocus = d.bool(forKey: "autoEnableOnFocus")
+        showIndicatorDot = d.object(forKey: "showIndicatorDot") as? Bool ?? true
+        colorSchemePref = ColorSchemePref(rawValue: d.string(forKey: "colorSchemePref") ?? "") ?? .system
+        cursorHalo = d.bool(forKey: "cursorHalo")
+        focusOnHover = d.bool(forKey: "focusOnHover")
+        autoDisableAfter = AutoDisableAfter(rawValue: d.string(forKey: "autoDisableAfter") ?? "") ?? .never
+        pinShortcutKey = (d.object(forKey: "pinShortcutKey") as? Int).flatMap { UInt16(exactly: $0) }
+        pinShortcutMods = UInt(d.integer(forKey: "pinShortcutMods"))
         overlayMode = OverlayMode(rawValue: d.string(forKey: "overlayMode") ?? "") ?? .deep
         tintPreset = TintPreset(rawValue: d.string(forKey: "tintPreset") ?? "") ?? .midnight
         useSystemTint = d.bool(forKey: "useSystemTint")

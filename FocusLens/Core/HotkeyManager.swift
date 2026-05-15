@@ -6,15 +6,18 @@ final class HotkeyManager {
     var onToggle: (() -> Void)?
     var onOpenSettings: (() -> Void)?
     var onToggleExclude: (() -> Void)?
+    var onTogglePin: (() -> Void)?
 
     private let settings: FocusLensSettings
     private var toggleRef: EventHotKeyRef?
     private var settingsRef: EventHotKeyRef?
     private var excludeRef: EventHotKeyRef?
+    private var pinRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
     private static let toggleID: UInt32 = 1
     private static let settingsID: UInt32 = 2
     private static let excludeID: UInt32 = 3
+    private static let pinID: UInt32 = 4
 
     init(settings: FocusLensSettings) { self.settings = settings }
 
@@ -38,6 +41,7 @@ final class HotkeyManager {
                 case HotkeyManager.toggleID: AppDelegate.shared?.hotkeyManager.onToggle?()
                 case HotkeyManager.settingsID: AppDelegate.shared?.hotkeyManager.onOpenSettings?()
                 case HotkeyManager.excludeID: AppDelegate.shared?.hotkeyManager.onToggleExclude?()
+                case HotkeyManager.pinID: AppDelegate.shared?.hotkeyManager.onTogglePin?()
                 default: break
                 }
             }
@@ -50,6 +54,7 @@ final class HotkeyManager {
         if let r = toggleRef { UnregisterEventHotKey(r); toggleRef = nil }
         if let r = settingsRef { UnregisterEventHotKey(r); settingsRef = nil }
         if let r = excludeRef { UnregisterEventHotKey(r); excludeRef = nil }
+        if let r = pinRef { UnregisterEventHotKey(r); pinRef = nil }
         if let key = settings.toggleShortcutKey {
             toggleRef = registerKey(keyCode: key, mods: settings.toggleShortcutMods, id: Self.toggleID)
         }
@@ -58,6 +63,9 @@ final class HotkeyManager {
         }
         if let key = settings.excludeAppShortcutKey {
             excludeRef = registerKey(keyCode: key, mods: settings.excludeAppShortcutMods, id: Self.excludeID)
+        }
+        if let key = settings.pinShortcutKey {
+            pinRef = registerKey(keyCode: key, mods: settings.pinShortcutMods, id: Self.pinID)
         }
     }
 

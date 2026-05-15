@@ -1,6 +1,6 @@
 cask "focuslens" do
-  version "1.0.1"
-  sha256 "be98cf5b938a3f66aacba40ffc29fe6e4fa1f347852990b006e4837bc0ffa210"
+  version "1.0.2"
+  sha256 :no_check  # update after release.sh prints the actual hash
 
   url "https://github.com/parththummar/FocusLens/releases/download/#{version}/FocusLens-#{version}.zip",
       verified: "github.com/parththummar/FocusLens/"
