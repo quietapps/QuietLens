@@ -202,6 +202,14 @@ final class OverlayManager {
         }
 
         let frontPID = NSWorkspace.shared.frontmostApplication?.processIdentifier ?? -1
+        let pinnedIDs = Set(settings.pinnedBundleIDs)
+        let pinnedPIDs: Set<pid_t> = {
+            guard !pinnedIDs.isEmpty else { return [] }
+            return Set(NSWorkspace.shared.runningApplications.compactMap { app in
+                guard let bid = app.bundleIdentifier, pinnedIDs.contains(bid) else { return nil }
+                return app.processIdentifier
+            })
+        }()
         var out: [CGDirectDisplayID: [WindowEntry]] = [:]
 
         for screen in NSScreen.screens {
@@ -209,9 +217,13 @@ final class OverlayManager {
             let sf = screen.frame
             var picked: [WindowEntry] = []
 
+            for e in entries where pinnedPIDs.contains(e.pid) && e.rect.intersects(sf) {
+                picked.append(WindowEntry(windowID: e.windowID, rect: e.rect))
+            }
+
             if settings.highlightSameAppWindows {
                 for e in entries where e.pid == frontPID {
-                    if e.rect.intersects(sf) {
+                    if e.rect.intersects(sf) && !picked.contains(where: { rectsApproxEqual($0.rect, e.rect) }) {
                         picked.append(WindowEntry(windowID: e.windowID, rect: e.rect))
                     }
                 }

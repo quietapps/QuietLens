@@ -39,6 +39,8 @@ Inspired by [Monocle](https://iamdk.gumroad.com/l/monocle-elegant-macos-window-b
 - Overlay opacity **10–100%**
 - 9 Apple system colors + rainbow custom picker + **As System** (matches macOS accent color live)
 - Optional gradient tint with second color + 0–360° angle
+- **Edge glow** — soft halo around the focused window, like macOS Stage Manager (toggle + radius slider, color follows tint)
+- **Custom backdrop** — replace the blur with your own image or the current macOS desktop wallpaper
 - High-frequency film grain (2048×2048 noise, soft-light blend, Gaussian-distributed for cinematic feel)
 - Grayscale background filter
 - Animated shader modes: **Static / Breathing / Drift / Pulse** with speed slider
@@ -46,6 +48,7 @@ Inspired by [Monocle](https://iamdk.gumroad.com/l/monocle-elegant-macos-window-b
 
 ### Smart window tracking
 - **Active window floats above the overlay** — using private CGS APIs to raise the focused window's z-level, so there's zero corner seam or anti-alias bleed around rounded macOS windows
+- **Pinned apps** — designate apps that always stay clear, even when not focused. Perfect for keeping a terminal, music player, or reference window visible while you work elsewhere
 - Per-screen active window detection — focus Xcode on monitor 1 + Slack on monitor 2, both stay crystal clear
 - Optional **highlight all windows of same app** for multi-window workflows (Xcode editors, Figma boards)
 - Smooth animated cutout transitions when you switch windows
@@ -72,6 +75,7 @@ Inspired by [Monocle](https://iamdk.gumroad.com/l/monocle-elegant-macos-window-b
 - Multi-display aware, hot-swappable monitors
 - Onboarding for Accessibility permission with auto-recovery polling
 - ⌘W closes Settings, transparent titlebar, vibrant material background
+- **iCloud sync** — optional toggle that mirrors your overlay configuration across all your Macs
 
 ## Installation
 

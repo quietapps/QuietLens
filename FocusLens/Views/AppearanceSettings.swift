@@ -66,6 +66,55 @@ struct AppearanceSettings: View {
                 }
             }
 
+            CCCard("Active Window Glow") {
+                CCRow(icon: "sparkles", title: "Edge Glow",
+                      subtitle: "Soft halo around the focused window") {
+                    Toggle("", isOn: $settings.edgeGlowEnabled).labelsHidden()
+                }
+                if settings.edgeGlowEnabled {
+                    Divider()
+                    SliderRow(icon: "scope", title: "Glow Radius",
+                              value: $settings.edgeGlowRadius, range: 2...30,
+                              display: "\(Int(round(settings.edgeGlowRadius)))")
+                }
+            }
+
+            CCCard("Backdrop") {
+                Picker("", selection: $settings.backdropMode) {
+                    ForEach(BackdropMode.allCases) { Text($0.label).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                if settings.backdropMode == .image {
+                    Divider()
+                    HStack {
+                        Image(systemName: "photo")
+                            .frame(width: 28, height: 28)
+                            .background(Circle().fill(Color.accentColor.opacity(0.15)))
+                            .foregroundStyle(Color.accentColor)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Custom Image")
+                            Text(settings.backdropImagePath ?? "None selected")
+                                .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                        }
+                        Spacer()
+                        Button("Choose…") { pickBackdropImage() }
+                        if settings.backdropImagePath != nil {
+                            Button {
+                                settings.backdropImagePath = nil
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                } else if settings.backdropMode == .wallpaper {
+                    Divider()
+                    Text("Uses your current desktop wallpaper as the dim layer.")
+                        .font(.callout).foregroundStyle(.secondary)
+                }
+            }
+
             CCCard("Transitions") {
                 SliderRow(icon: "timer", title: "Fade Duration",
                           value: $settings.fadeDuration, range: 0.05...1.0,
@@ -192,6 +241,17 @@ struct TintPresetRow: View {
                     .buttonStyle(.plain)
                 }
             }
+        }
+    }
+}
+
+extension AppearanceSettings {
+    func pickBackdropImage() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image]
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let url = panel.url {
+            settings.backdropImagePath = url.path
         }
     }
 }

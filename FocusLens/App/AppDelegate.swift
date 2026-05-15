@@ -35,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
         setupStatusItem()
         setupBindings()
         setupURLHandler()
+        iCloudSync.shared.start()
 
         windowTracker.onFocusedWindowChanged = { [weak self] info in
             self?.handleFocusChange(info)
@@ -120,6 +121,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
                 self.overlayManager.refreshGeometry()
                 self.windowTracker.refresh()
                 self.applyAutoHide()
+                iCloudSync.shared.pushCurrent()
             }
             .store(in: &cancellables)
     }

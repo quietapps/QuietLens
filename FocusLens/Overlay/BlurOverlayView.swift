@@ -7,6 +7,8 @@ final class BlurOverlayView: NSView {
     private let tintLayer = CALayer()
     private let gradientLayer = CAGradientLayer()
     private let grainLayer = CALayer()
+    private let backdropLayer = CALayer()
+    private var lastBackdropKey: String = ""
 
     override init(frame frameRect: NSRect) {
         effect = NSVisualEffectView(frame: frameRect)
@@ -19,10 +21,14 @@ final class BlurOverlayView: NSView {
         effect.state = .active
         effect.appearance = NSAppearance(named: .darkAqua)
         addSubview(effect)
+        backdropLayer.frame = bounds
+        backdropLayer.contentsGravity = .resizeAspectFill
+        backdropLayer.isHidden = true
         tintLayer.frame = bounds
         gradientLayer.frame = bounds
         grainLayer.frame = bounds
         grainLayer.contentsGravity = .resizeAspectFill
+        layer?.addSublayer(backdropLayer)
         layer?.addSublayer(tintLayer)
         layer?.addSublayer(gradientLayer)
         layer?.addSublayer(grainLayer)
@@ -34,6 +40,7 @@ final class BlurOverlayView: NSView {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         effect.frame = bounds
+        backdropLayer.frame = bounds
         tintLayer.frame = bounds
         gradientLayer.frame = bounds
         grainLayer.frame = bounds
@@ -47,9 +54,16 @@ final class BlurOverlayView: NSView {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
 
-        if radius < 0.5 {
+        let useBackdropImage = settings.backdropMode != .blur
+        if useBackdropImage {
+            applyBackdropImage(settings: settings)
+            backdropLayer.isHidden = false
+            effect.isHidden = true
+        } else if radius < 0.5 {
+            backdropLayer.isHidden = true
             effect.isHidden = true
         } else {
+            backdropLayer.isHidden = true
             effect.isHidden = false
             switch radius {
             case ..<15: effect.material = .popover
@@ -154,6 +168,40 @@ final class BlurOverlayView: NSView {
             g.duration = 7.0 / s
             g.repeatCount = .infinity
             layer?.add(g, forKey: "shader")
+        }
+    }
+
+    private func applyBackdropImage(settings: FocusLensSettings) {
+        let key: String
+        let imageURL: URL?
+        switch settings.backdropMode {
+        case .blur:
+            imageURL = nil
+            key = ""
+        case .image:
+            if let p = settings.backdropImagePath, !p.isEmpty {
+                imageURL = URL(fileURLWithPath: p)
+                key = "image:\(p)"
+            } else {
+                imageURL = nil
+                key = "image:nil"
+            }
+        case .wallpaper:
+            if let screen = window?.screen ?? NSScreen.main {
+                imageURL = NSWorkspace.shared.desktopImageURL(for: screen)
+                key = "wallpaper:\(imageURL?.path ?? "nil")"
+            } else {
+                imageURL = nil
+                key = "wallpaper:nil"
+            }
+        }
+        guard key != lastBackdropKey else { return }
+        lastBackdropKey = key
+        if let url = imageURL, let image = NSImage(contentsOf: url) {
+            var rect = NSRect(origin: .zero, size: image.size)
+            backdropLayer.contents = image.cgImage(forProposedRect: &rect, context: nil, hints: nil)
+        } else {
+            backdropLayer.contents = nil
         }
     }
 

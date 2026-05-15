@@ -163,6 +163,12 @@ struct GeneralSettings: View {
                     }.labelsHidden().frame(width: 180)
                 }
             }
+            CCCard("Sync") {
+                CCRow(icon: "icloud", title: "iCloud Settings Sync",
+                      subtitle: "Mirror your overlay configuration across Macs") {
+                    Toggle("", isOn: $settings.iCloudSyncEnabled).labelsHidden()
+                }
+            }
             CCCard("Updates") {
                 CCRow(icon: "arrow.down.circle", title: "Check for Updates", subtitle: "Coming soon") {
                     Button("Check") {}
@@ -238,7 +244,7 @@ struct AboutView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "circle.lefthalf.filled").font(.system(size: 64))
                     Text("FocusLens").font(.system(size: 22, weight: .bold))
-                    Text("Version 1.0.0").foregroundStyle(.secondary)
+                    Text("Version 1.0.1").foregroundStyle(.secondary)
                     Text("Free and open source under the MIT License.")
                         .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 }

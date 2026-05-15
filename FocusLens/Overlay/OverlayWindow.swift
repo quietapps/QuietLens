@@ -33,6 +33,9 @@ final class OverlayWindow: NSWindow {
 
     func applyAppearance(settings: FocusLensSettings) {
         blurView.apply(settings: settings)
+        cutoutView.applyGlow(enabled: settings.edgeGlowEnabled,
+                             color: settings.effectiveTintColor,
+                             radius: CGFloat(settings.edgeGlowRadius))
     }
 
     func setCutouts(_ rects: [CGRect], duration: TimeInterval) {

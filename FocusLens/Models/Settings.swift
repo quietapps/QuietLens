@@ -58,6 +58,18 @@ enum OverlayMode: String, CaseIterable, Identifiable {
     var label: String { rawValue.capitalized }
 }
 
+enum BackdropMode: String, CaseIterable, Identifiable {
+    case blur, image, wallpaper
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .blur: return "Blur"
+        case .image: return "Image"
+        case .wallpaper: return "Wallpaper"
+        }
+    }
+}
+
 enum ShaderMode: String, CaseIterable, Identifiable {
     case staticMode = "static", breathing, drift, pulse
     var id: String { rawValue }
@@ -115,9 +127,15 @@ final class FocusLensSettings: ObservableObject {
     @Published var onboardingDismissed: Bool { didSet { set(onboardingDismissed, "onboardingDismissed") } }
 
     @Published var excludedBundleIDs: [String] { didSet { set(excludedBundleIDs, "excludedBundleIDs") } }
+    @Published var pinnedBundleIDs: [String] { didSet { set(pinnedBundleIDs, "pinnedBundleIDs") } }
     @Published var highlightSameAppWindows: Bool { didSet { set(highlightSameAppWindows, "highlightSameAppWindows") } }
     @Published var autoHideDock: Bool { didSet { set(autoHideDock, "autoHideDock") } }
     @Published var autoHideMenuBar: Bool { didSet { set(autoHideMenuBar, "autoHideMenuBar") } }
+    @Published var iCloudSyncEnabled: Bool { didSet { set(iCloudSyncEnabled, "iCloudSyncEnabled") } }
+    @Published var edgeGlowEnabled: Bool { didSet { set(edgeGlowEnabled, "edgeGlowEnabled") } }
+    @Published var edgeGlowRadius: Double { didSet { set(edgeGlowRadius, "edgeGlowRadius") } }
+    @Published var backdropMode: BackdropMode { didSet { set(backdropMode.rawValue, "backdropMode") } }
+    @Published var backdropImagePath: String? { didSet { defaults.set(backdropImagePath, forKey: "backdropImagePath") } }
 
     private init() {
         let d = UserDefaults.standard
@@ -154,9 +172,47 @@ final class FocusLensSettings: ObservableObject {
         } else {
             excludedBundleIDs = d.stringArray(forKey: "excludedBundleIDs") ?? []
         }
+        pinnedBundleIDs = d.stringArray(forKey: "pinnedBundleIDs") ?? []
         highlightSameAppWindows = d.bool(forKey: "highlightSameAppWindows")
         autoHideDock = d.bool(forKey: "autoHideDock")
         autoHideMenuBar = d.bool(forKey: "autoHideMenuBar")
+        iCloudSyncEnabled = d.bool(forKey: "iCloudSyncEnabled")
+        edgeGlowEnabled = d.bool(forKey: "edgeGlowEnabled")
+        edgeGlowRadius = d.object(forKey: "edgeGlowRadius") as? Double ?? 12
+        backdropMode = BackdropMode(rawValue: d.string(forKey: "backdropMode") ?? "") ?? .blur
+        backdropImagePath = d.string(forKey: "backdropImagePath")
+    }
+
+    func reload() {
+        let d = defaults
+        overlayMode = OverlayMode(rawValue: d.string(forKey: "overlayMode") ?? "") ?? .deep
+        tintPreset = TintPreset(rawValue: d.string(forKey: "tintPreset") ?? "") ?? .midnight
+        useSystemTint = d.bool(forKey: "useSystemTint")
+        blurIntensity = d.object(forKey: "blurIntensity") as? Double ?? 0.6
+        blurRadius = d.object(forKey: "blurRadius") as? Double ?? 20
+        overlayOpacity = d.object(forKey: "overlayOpacity") as? Double ?? 0.7
+        tintColorHex = d.string(forKey: "tintColorHex") ?? "#000000"
+        tintColor2Hex = d.string(forKey: "tintColor2Hex") ?? "#1A1A2E"
+        gradientEnabled = d.bool(forKey: "gradientEnabled")
+        gradientAngle = d.object(forKey: "gradientAngle") as? Double ?? 90
+        grainIntensity = d.object(forKey: "grainIntensity") as? Double ?? 0.0
+        grayscale = d.bool(forKey: "grayscale")
+        fadeDuration = d.object(forKey: "fadeDuration") as? Double ?? 0.25
+        shaderMode = ShaderMode(rawValue: d.string(forKey: "shaderMode") ?? "") ?? .staticMode
+        animationSpeed = d.object(forKey: "animationSpeed") as? Double ?? 1.0
+        shakeEnabled = d.object(forKey: "shakeEnabled") as? Bool ?? true
+        shakeSensitivity = d.object(forKey: "shakeSensitivity") as? Double ?? 0.5
+        shakeModifier = ShakeModifier(rawValue: d.string(forKey: "shakeModifier") ?? "") ?? .none
+        excludedBundleIDs = d.stringArray(forKey: "excludedBundleIDs") ?? excludedBundleIDs
+        pinnedBundleIDs = d.stringArray(forKey: "pinnedBundleIDs") ?? []
+        highlightSameAppWindows = d.bool(forKey: "highlightSameAppWindows")
+        autoHideDock = d.bool(forKey: "autoHideDock")
+        autoHideMenuBar = d.bool(forKey: "autoHideMenuBar")
+        iCloudSyncEnabled = d.bool(forKey: "iCloudSyncEnabled")
+        edgeGlowEnabled = d.bool(forKey: "edgeGlowEnabled")
+        edgeGlowRadius = d.object(forKey: "edgeGlowRadius") as? Double ?? 12
+        backdropMode = BackdropMode(rawValue: d.string(forKey: "backdropMode") ?? "") ?? .blur
+        backdropImagePath = d.string(forKey: "backdropImagePath")
     }
 
     private func set(_ v: Any?, _ k: String) { defaults.set(v, forKey: k) }
