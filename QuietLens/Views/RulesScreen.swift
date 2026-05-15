@@ -80,9 +80,9 @@ struct RulesScreen: View {
                                 title: "Highlight all windows of same app",
                                 isFirst: true,
                                 trailing: { GlassSwitch(isOn: $settings.highlightSameAppWindows) })
-                    SettingsRow(icon: "dock.rectangle", title: "Hide Dock while focused",
+                    SettingsRow(icon: "dock.rectangle", title: "Blur Dock while focused",
                                 trailing: { GlassSwitch(isOn: $settings.autoHideDock) })
-                    SettingsRow(icon: "menubar.rectangle", title: "Hide menu bar while focused",
+                    SettingsRow(icon: "menubar.rectangle", title: "Blur menu bar while focused",
                                 trailing: { GlassSwitch(isOn: $settings.autoHideMenuBar) })
                     SettingsRow(icon: "timer", title: "Auto-disable after",
                                 subtitle: "Turn the overlay off after this idle period.",

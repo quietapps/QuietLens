@@ -67,12 +67,12 @@ struct SettingsView: View {
             HStack(spacing: 10) {
                 Image(nsImage: NSApp.applicationIconImage)
                     .resizable().interpolation(.high)
-                    .frame(width: 30, height: 30)
+                    .frame(width: 44, height: 44)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Quiet Lens")
                         .font(.system(size: 16, weight: .semibold))
                         .tracking(-0.16)
-                    Text("1.0.3")
+                    Text((Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "—")
                         .font(.system(size: 10, weight: .medium))
                         .tracking(0.6)
                         .foregroundStyle(FL.C.text3(scheme))

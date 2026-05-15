@@ -31,6 +31,26 @@ Built `.app` lands in `~/Library/Developer/Xcode/DerivedData/QuietLens-*/Build/P
 
 No test target exists. No linter configured.
 
+## Bumping the version
+
+Version is single-sourced in `project.yml`:
+
+- `MARKETING_VERSION` (e.g. `"1.0.4"`)
+- `CURRENT_PROJECT_VERSION` (e.g. `"5"`)
+
+`Info.plist` uses `$(MARKETING_VERSION)` / `$(CURRENT_PROJECT_VERSION)` substitution, and `AboutScreen.swift` reads `CFBundleShortVersionString` / `CFBundleVersion` from `Bundle.main.infoDictionary` at runtime — so the only place to edit is `project.yml`.
+
+Bump via the helper script:
+
+```bash
+bash scripts/bump-version.sh 1.0.4         # auto-increments build by +1
+bash scripts/bump-version.sh 1.0.4 7       # explicit build number
+```
+
+The script updates `project.yml`, resets `Casks/quietlens.rb` sha to `:no_check`, and runs `xcodegen generate`. After cutting the release, `scripts/release.sh` prints the new sha256 to paste back into the cask.
+
+**Note:** Build Settings edits made inside Xcode are lost on the next `xcodegen generate` — always edit `project.yml` (or use `bump-version.sh`), then regenerate.
+
 ## Regenerating the app icon
 
 Icons are generated procedurally by a Swift script (no Sketch/Figma source). To rebuild them:

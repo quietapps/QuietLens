@@ -4,6 +4,26 @@ All notable changes to Quiet Lens are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] — 2026-05-15
+
+**Build 5** · Brand visuals aligned to the **Quiet Apps** design system.
+
+### Added
+- **New app icon** — violet `#8B5CF6` → `#5B36B8` gradient background with a focused-window-stack glyph (one bright window on top of two dimmed windows, traffic-light dots on the focused one). Color now matches the in-app accent.
+- **About → "An app by Quiet Apps"** subtitle under the app name.
+- **About → Credits** now reads "Part of the Quiet Apps family… Follows the Quiet Apps brand system."
+- **Version is now read from `Bundle.main`** at runtime — About screen always shows the real `CFBundleShortVersionString (CFBundleVersion)` instead of a hardcoded string.
+- **`scripts/bump-version.sh VERSION [BUILD]`** — single command bumps `project.yml` + `Casks/quietlens.rb` and regenerates the Xcode project.
+
+### Changed
+- `Info.plist` now uses `$(MARKETING_VERSION)` / `$(CURRENT_PROJECT_VERSION)` substitution, so the only source of truth for version is `project.yml`. Bumping it propagates automatically to the built `.app`, the About screen, and the release zip name.
+- Settings UI: unchanged (intentional — Liquid Glass v1 stays as-is).
+
+### Migration
+- No user action required. App preferences and pinned-apps survive the version bump.
+
+---
+
 ## [1.0.3] — 2026-05-15
 
 **Build 4** · Rebrand — FocusLens is now **Quiet Lens**, the first app under the new **Quiet** company umbrella.
@@ -182,7 +202,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
-[Unreleased]: https://github.com/quietapps/QuietLens/compare/1.0.3...HEAD
+[Unreleased]: https://github.com/quietapps/QuietLens/compare/1.0.4...HEAD
+[1.0.4]: https://github.com/quietapps/QuietLens/releases/tag/1.0.4
 [1.0.3]: https://github.com/quietapps/QuietLens/releases/tag/1.0.3
 [1.0.2]: https://github.com/parththummar/FocusLens/releases/tag/1.0.2
 [1.0.1]: https://github.com/parththummar/FocusLens/releases/tag/1.0.1

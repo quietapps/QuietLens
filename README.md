@@ -6,7 +6,7 @@
 
 **Dim everything except your active window.**
 
-A native macOS menu bar app that blurs every window except the one you're working in — so you can focus on one task at a time.
+A native macOS menu bar app that blurs every window except the one you're working in — so you can focus on one task at a time. Part of the [Quiet Apps](https://github.com/quietapps) family.
 
 [![macOS](https://img.shields.io/badge/macOS-14.0+-000000?logo=apple&logoColor=white)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-5.9-F05138?logo=swift&logoColor=white)](https://swift.org)
@@ -271,6 +271,21 @@ xcodebuild -project QuietLens.xcodeproj -scheme QuietLens -configuration Release
 ```
 
 The built `.app` lands in `~/Library/Developer/Xcode/DerivedData/QuietLens-*/Build/Products/Release/`.
+
+### Bumping the version
+
+`project.yml` is the single source of truth for the version. Both the Info.plist and the About screen read it dynamically, so you only have to change it in one place.
+
+```bash
+# Bumps MARKETING_VERSION + auto-increments build number,
+# resets the Cask sha256, regenerates the Xcode project.
+bash scripts/bump-version.sh 1.0.4
+
+# Or specify the build number explicitly:
+bash scripts/bump-version.sh 1.0.4 7
+```
+
+Editing `MARKETING_VERSION` directly in `project.yml` works too — just run `xcodegen generate` afterwards. Note: changes made in Xcode's Build Settings UI are lost on the next `xcodegen generate`, so always treat `project.yml` as the source.
 
 ### Project layout
 

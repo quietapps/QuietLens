@@ -48,6 +48,7 @@ final class WindowTracker {
         }
         axObserver = nil
         axApp = AXUIElementCreateApplication(pid)
+        if let app = axApp { AXUIElementSetMessagingTimeout(app, 0.4) }
         observedPID = pid
         var obs: AXObserver?
         let cb: AXObserverCallback = { _, _, _, refcon in
@@ -79,10 +80,13 @@ final class WindowTracker {
         currentApp = app
         let pid = app.processIdentifier
         let axApp = AXUIElementCreateApplication(pid)
+        // Prevent main-thread hangs if the target app's AX server is unresponsive.
+        AXUIElementSetMessagingTimeout(axApp, 0.4)
         var winRef: CFTypeRef?
         guard AXUIElementCopyAttributeValue(axApp, kAXFocusedWindowAttribute as CFString, &winRef) == .success,
               let win = winRef else { return nil }
         let axWin = win as! AXUIElement
+        AXUIElementSetMessagingTimeout(axWin, 0.4)
 
         var posRef: CFTypeRef?
         var sizeRef: CFTypeRef?

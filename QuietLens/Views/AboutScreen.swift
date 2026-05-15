@@ -3,6 +3,13 @@ import SwiftUI
 struct AboutScreen: View {
     @Environment(\.colorScheme) var scheme
 
+    private var appVersion: String {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let short = (info["CFBundleShortVersionString"] as? String) ?? "—"
+        let build = (info["CFBundleVersion"] as? String) ?? "—"
+        return "Version \(short) (\(build))"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             PageHeader("About", subtitle: "Version, license, and credits.")
@@ -15,10 +22,13 @@ struct AboutScreen: View {
                         .shadow(color: .black.opacity(0.3), radius: 24, y: 12)
                     Text("Quiet Lens")
                         .font(.system(size: 24, weight: .semibold))
+                    Text("An app by Quiet Apps")
+                        .font(FL.T.bodyR())
+                        .foregroundStyle(FL.C.text2(scheme))
                     HStack(spacing: 6) {
                         Circle().fill(FL.C.green).frame(width: 8, height: 8)
                             .shadow(color: FL.C.green.opacity(0.6), radius: 4)
-                        Text("Version 1.0.3")
+                        Text(appVersion)
                             .font(FL.T.mono())
                             .foregroundStyle(FL.C.text2(scheme))
                     }
@@ -50,7 +60,7 @@ struct AboutScreen: View {
 
             SectionLabel(text: "Credits")
             GlassPanel {
-                Text("Inspired by Monocle. Built with Swift, SwiftUI, and AppKit. Liquid Glass design system v1.")
+                Text("Part of the Quiet Apps family. Inspired by Monocle. Built with Swift, SwiftUI, and AppKit. Follows the Quiet Apps brand system.")
                     .font(FL.T.bodyR())
                     .foregroundStyle(FL.C.text2(scheme))
                     .padding(FL.S.s4)

@@ -132,7 +132,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
     private func setupBindings() {
         let s = QuietLensSettings.shared
         s.objectWillChange
-            .receive(on: RunLoop.main)
+            .debounce(for: .milliseconds(60), scheduler: RunLoop.main)
             .sink { [weak self] _ in
                 guard let self else { return }
                 self.updateStatusIcon()
@@ -336,7 +336,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
         let s = QuietLensSettings.shared
         let active = overlayManager.isEnabled && overlayManager.isVisible
         var opts: NSApplication.PresentationOptions = []
-        if active && s.autoHideDock { opts.insert(.autoHideDock) }
         if active && s.autoHideMenuBar { opts.insert(.autoHideMenuBar) }
         NSApp.presentationOptions = opts
     }
