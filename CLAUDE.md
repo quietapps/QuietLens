@@ -61,6 +61,17 @@ swift /tmp/quietlens_icon.swift   # or run the script wherever you saved it
 
 The script renders 10 PNGs into `QuietLens/Resources/Assets.xcassets/AppIcon.appiconset/` at exact pixel sizes (16/32/64/128/256/512/1024 px). Uses `CGContext` directly — do **not** use `NSImage(size:)` which doubles to HiDPI pixels.
 
+### Quiet Apps icon standard (macOS 26 Tahoe)
+
+All Quiet Apps icons must follow this spec or they appear oversized in the Dock:
+
+- **Canvas:** 1024×1024 px transparent PNG
+- **Outer padding:** 9% transparent on all sides → artwork in center 82%. Outer ring fully transparent.
+- **Squircle shape:** true superellipse (n=5), NOT `CGPath(roundedRect:)`. Corner radius ≈ 22% of art area width (~188px on an 840×840 art area).
+- **Background fill:** fills the squircle only — never the full 1024px canvas.
+
+For PNG-based icons: use `scripts/pad-icon.swift <appiconset_dir>` to add the transparent outer ring in place. Reference implementation with superellipse: `QuietFinance/scripts/GenerateIcon.swift`.
+
 ## Architecture overview
 
 Three coordinated layers. Understanding the interaction is more important than any one file:
