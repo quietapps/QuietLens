@@ -45,12 +45,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
         automationHandler = AutomationHandler()
 
         setupStatusItem()
+        setupMainMenu()
         setupBindings()
         setupURLHandler()
         iCloudSync.shared.start()
 
         windowTracker.onFocusedWindowChanged = { [weak self] info in
             self?.handleFocusChange(info)
+        }
+        windowTracker.onWindowGeometryChanged = { [weak self] in
+            self?.overlayManager.noteWindowGeometryChanging()
+        }
+        overlayManager.onEnabledChanged = { [weak self] enabled in
+            guard let self else { return }
+            self.windowTracker.setPollingEnabled(enabled)
+            if enabled {
+                self.pauseTimer?.invalidate()
+                self.pauseTimer = nil
+                self.windowTracker.refresh()
+                self.applyCurrentExclusion()
+            }
+            self.scheduleAutoDisable(enabled: enabled)
+            self.updateStatusIcon()
+            self.applyAutoHide()
         }
         shakeDetector.onShake = { [weak self] in self?.toggleOverlay() }
         shakeDetector.onPeekStart = { [weak self] in self?.overlayManager.peek(true) }
@@ -66,6 +83,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
 
     private var trackingStarted = false
     private var axPollTimer: Timer?
+    private var autoDisableTimer: Timer?
+    private var pauseTimer: Timer?
+    private var lastAutoDisable: AutoDisableAfter = .never
+    /// True after the user explicitly turned the overlay off. Suppresses
+    /// auto-enable-on-focus until the user turns it back on, so the setting
+    /// can't fight a deliberate "off".
+    private var userDisabledOverlay = false
 
     private var wasShowingOnboarding = false
 
@@ -88,7 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
     @MainActor
     private func startAccessibilityPoll() {
         axPollTimer?.invalidate()
-        axPollTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
+        let t = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
                 let trusted = AXIsProcessTrusted()
@@ -107,6 +131,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
                 }
             }
         }
+        t.tolerance = 0.5
+        axPollTimer = t
     }
 
     @MainActor
@@ -125,6 +151,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
     @MainActor
     private func setupBindings() {
         let s = QuietLensSettings.shared
+        lastAutoDisable = s.autoDisableAfter
         s.objectWillChange
             .debounce(for: .milliseconds(60), scheduler: RunLoop.main)
             .sink { [weak self] _ in
@@ -134,9 +161,86 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
                 self.overlayManager.refreshGeometry()
                 self.windowTracker.refresh()
                 self.applyAutoHide()
-                iCloudSync.shared.pushCurrent()
+                let auto = QuietLensSettings.shared.autoDisableAfter
+                if auto != self.lastAutoDisable {
+                    self.lastAutoDisable = auto
+                    self.scheduleAutoDisable(enabled: self.overlayManager.isEnabled)
+                }
             }
             .store(in: &cancellables)
+        // iCloud push is debounced separately and much more loosely — the
+        // 60ms cadence above fires on every slider tick, and each push hits
+        // NSUbiquitousKeyValueStore.synchronize().
+        s.objectWillChange
+            .debounce(for: .seconds(2), scheduler: RunLoop.main)
+            .sink { _ in iCloudSync.shared.pushCurrent() }
+            .store(in: &cancellables)
+    }
+
+    /// LSUIElement apps have no visible menu bar menu, but a main menu is
+    /// still required for standard key equivalents (⌘C/⌘V in the search
+    /// field, ⌘W to close Settings, ⌘Q to quit) to reach the responder chain.
+    @MainActor
+    private func setupMainMenu() {
+        let main = NSMenu()
+
+        let appItem = NSMenuItem()
+        let appMenu = NSMenu()
+        appMenu.addItem(withTitle: "Quit Quiet Lens",
+                        action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appItem.submenu = appMenu
+        main.addItem(appItem)
+
+        let editItem = NSMenuItem()
+        let edit = NSMenu(title: "Edit")
+        edit.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        edit.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "Z")
+        edit.addItem(.separator())
+        edit.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editItem.submenu = edit
+        main.addItem(editItem)
+
+        let windowItem = NSMenuItem()
+        let win = NSMenu(title: "Window")
+        win.addItem(withTitle: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        win.addItem(withTitle: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        windowItem.submenu = win
+        main.addItem(windowItem)
+
+        NSApp.mainMenu = main
+    }
+
+    @MainActor
+    private func scheduleAutoDisable(enabled: Bool) {
+        autoDisableTimer?.invalidate()
+        autoDisableTimer = nil
+        guard enabled, let secs = QuietLensSettings.shared.autoDisableAfter.seconds else { return }
+        let t = Timer.scheduledTimer(withTimeInterval: secs, repeats: false) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.overlayManager.isEnabled else { return }
+                // Route through setOverlayEnabled so auto-enable-on-focus
+                // doesn't immediately undo the auto-disable on the next
+                // focus change.
+                self.setOverlayEnabled(false)
+            }
+        }
+        t.tolerance = min(30, secs * 0.05)
+        autoDisableTimer = t
+    }
+
+    @MainActor
+    func pauseOverlay(for seconds: TimeInterval) {
+        guard overlayManager.isEnabled else { return }
+        userDisabledOverlay = true
+        overlayManager.setEnabled(false, animated: true)
+        let t = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { [weak self] _ in
+            Task { @MainActor in self?.setOverlayEnabled(true) }
+        }
+        t.tolerance = 5
+        pauseTimer = t
     }
 
     private func setupURLHandler() {
@@ -186,6 +290,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
         focusItem.isEnabled = false
         menu.addItem(focusItem)
 
+        if isOn {
+            let pauseItem = NSMenuItem(title: "Pause for 5 Minutes",
+                                       action: #selector(pauseFiveMinutes), keyEquivalent: "")
+            pauseItem.image = NSImage(systemSymbolName: "moon.zzz", accessibilityDescription: nil)
+            pauseItem.target = self
+            menu.addItem(pauseItem)
+        }
+
+        menu.addItem(.separator())
+
+        let modeItem = NSMenuItem(title: "Mode", action: nil, keyEquivalent: "")
+        modeItem.image = NSImage(systemSymbolName: "circle.lefthalf.filled", accessibilityDescription: nil)
+        let modeMenu = NSMenu()
+        for mode in OverlayMode.allCases {
+            let mi = NSMenuItem(title: "\(mode.label) — \(mode.summary)",
+                                action: #selector(selectMode(_:)), keyEquivalent: "")
+            mi.target = self
+            mi.representedObject = mode.rawValue
+            mi.state = (QuietLensSettings.shared.overlayMode == mode) ? .on : .off
+            modeMenu.addItem(mi)
+        }
+        modeItem.submenu = modeMenu
+        menu.addItem(modeItem)
+
         let excluded = isCurrentExcluded()
         let exItem = NSMenuItem(title: excluded ? "Include Current App" : "Exclude Current App",
                                 action: #selector(toggleExcludeCurrent), keyEquivalent: "")
@@ -193,6 +321,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
                                accessibilityDescription: nil)
         exItem.target = self
         menu.addItem(exItem)
+
+        if let id = windowTracker.currentApp?.bundleIdentifier {
+            let pinned = QuietLensSettings.shared.pinnedBundleIDs.contains(id)
+            let pinItem = NSMenuItem(title: pinned ? "Unpin Current App" : "Pin Current App",
+                                     action: #selector(togglePinFromMenu), keyEquivalent: "")
+            pinItem.image = NSImage(systemSymbolName: pinned ? "pin.slash" : "pin",
+                                    accessibilityDescription: nil)
+            pinItem.target = self
+            menu.addItem(pinItem)
+        }
 
         menu.addItem(.separator())
 
@@ -221,6 +359,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
 
     @MainActor @objc private func toggleFromMenu() { toggleOverlay() }
     @MainActor @objc private func openSettingsFromMenu() { openSettings() }
+    @MainActor @objc private func pauseFiveMinutes() { pauseOverlay(for: 300) }
+    @MainActor @objc private func togglePinFromMenu() { togglePinCurrent() }
+    @MainActor @objc private func selectMode(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let mode = OverlayMode(rawValue: raw) else { return }
+        QuietLensSettings.shared.overlayMode = mode
+    }
     @MainActor func togglePinCurrent() {
         guard let id = windowTracker.currentApp?.bundleIdentifier else { return }
         var list = QuietLensSettings.shared.pinnedBundleIDs
@@ -244,16 +389,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
 
     @MainActor
     func toggleOverlay() {
-        let willEnable = !overlayManager.isEnabled
-        overlayManager.setEnabled(willEnable, animated: true)
-        if willEnable {
-            // Re-read the frontmost window so the overlay applies to the
-            // window the user is looking at right now, not the stale one.
-            windowTracker.refresh()
-            applyCurrentExclusion()
-        }
-        applyAutoHide()
-        updateStatusIcon()
+        setOverlayEnabled(!overlayManager.isEnabled)
+    }
+
+    /// Single entry point for user-intent enable/disable (menu, hotkey,
+    /// shake, URL automation). Tracks the manual-off flag that gates
+    /// auto-enable-on-focus; onEnabledChanged handles icon, polling,
+    /// auto-hide, and re-reading the frontmost window.
+    @MainActor
+    func setOverlayEnabled(_ on: Bool) {
+        userDisabledOverlay = !on
+        overlayManager.setEnabled(on, animated: true)
     }
 
     @MainActor
@@ -329,6 +475,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
 
     @MainActor
     private func handleFocusChange(_ info: FocusedWindowInfo?) {
+        if QuietLensSettings.shared.autoEnableOnFocus,
+           !overlayManager.isEnabled, !userDisabledOverlay, info != nil {
+            overlayManager.setEnabled(true, animated: true)
+        }
         applyCurrentExclusion()
         overlayManager.updateFocus(info, animated: true)
         updateStatusIcon()
@@ -346,7 +496,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
         let s = QuietLensSettings.shared
         let active = overlayManager.isEnabled && overlayManager.isVisible
         var opts: NSApplication.PresentationOptions = []
-        if active && s.autoHideMenuBar { opts.insert(.autoHideMenuBar) }
+        if active && s.autoHideMenuBar {
+            // AppKit requires autoHideDock whenever autoHideMenuBar is set;
+            // setting the menu-bar option alone throws
+            // NSInvalidArgumentException and kills the app.
+            opts.insert(.autoHideMenuBar)
+            opts.insert(.autoHideDock)
+        }
         NSApp.presentationOptions = opts
     }
 
@@ -373,6 +529,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @unc
         let image = Self.menuBarImage(state: state)
         btn.image = image
         btn.image?.isTemplate = (state != .ambient)
+
+        let stateText: String
+        switch state {
+        case .excluded: stateText = "overlay off for this app"
+        case .off: stateText = isOn ? "overlay on" : "overlay off"
+        case .ambient, .deep: stateText = "overlay on"
+        }
+        btn.toolTip = "Quiet Lens — \(stateText)"
+        btn.setAccessibilityLabel("Quiet Lens, \(stateText)")
     }
 
     private static func menuBarImage(state: MenuIconState) -> NSImage {

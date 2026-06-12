@@ -4,6 +4,41 @@ All notable changes to Quiet Lens are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] — 2026-06-11
+
+**Build 7** · Stability, performance, and accessibility overhaul — one crash fix, event-driven input tracking, working auto-disable/auto-enable/update-check, global settings search.
+
+### Added
+- **Auto-disable after** (Rules → Behavior) is now functional — the overlay turns itself off 5 min / 10 min / 30 min / 1 hour after being enabled.
+- **Auto-enable on focus** (General → Startup) is now functional — the overlay re-enables when you switch windows; turning it off manually pauses the behavior until you turn the overlay back on.
+- **Check for Updates** (General → Updates) is now functional — queries the latest GitHub release on demand and links to the release page when a newer version exists. No background phoning home.
+- **iCloud Settings Sync toggle** is now wired to the existing sync engine (active on builds signed with the iCloud entitlement). Flipping it on mid-session now works.
+- **Menu bar context menu**: new *Pause for 5 Minutes* item, *Mode* submenu (Deep / Ambient / Tinted), and *Pin / Unpin Current App* item.
+- **Global settings search** — the ⌘K search field now searches across **all** tabs, matches every word you type independently, and clears with ⎋.
+- **Standard key equivalents in Settings** — ⌘C/⌘V/⌘X/⌘A now work in the search field, ⌘W closes the window, ⌘M minimizes (LSUIElement apps need an explicit main menu for these).
+
+### Fixed
+- **Crash**: enabling *Blur menu bar while focused* set `NSApplication.PresentationOptions.autoHideMenuBar` without the required `.autoHideDock`, which AppKit rejects with `NSInvalidArgumentException`.
+- **Overlay flicker during text selection** — the overlay used to hide on *any* left-drag. It now hides only while a window is actually being moved or resized (detected via AX window-moved/resized events while the mouse button is down), so selecting text no longer blinks the overlay.
+- **Stale menu bar icon after `quietlens://enable|disable`** — URL automation now goes through the same state path as the menu and hotkeys, so icon, menu-bar auto-hide, and polling state stay in sync.
+- **Hardcoded "version 1.0.3"** in General → Updates replaced with the real bundle version.
+- **iCloud sync engine** could permanently latch "off" if the toggle was enabled after launch.
+- **Settings → reload()** missed `onboardingDismissed`, so that key never applied from a cloud pull.
+
+### Performance
+- **Shake detection is now event-driven** (mouse-move monitors) instead of a 60 Hz always-on timer — zero CPU while the pointer is idle, sampling capped at ~125 Hz while moving.
+- **Focused-window polling now runs only while the overlay is enabled.** The 0.5 s fallback poll (one AX round-trip + full CGWindowList scan per tick) previously ran forever, even with the overlay off.
+- **iCloud pushes debounced to 2 s** — previously every 60 ms settings tick (i.e. every slider pixel) triggered a `NSUbiquitousKeyValueStore.synchronize()`.
+- **Film-grain texture generation moved off the main thread** and switched from 16M Swift RNG calls to `arc4random_buf` plane fills — enabling grain no longer hangs the UI.
+- Timer tolerances added across the app so macOS can coalesce wakeups.
+
+### Accessibility
+- System **Reduce Motion** now disables the breathing/drift/pulse overlay animations and the Settings live-preview animations.
+- VoiceOver: settings rows read as single labeled elements; switches expose On/Off values; sliders are adjustable with VO gestures and have proper labels; segmented controls and color swatches expose names and selection state.
+- Menu bar icon exposes a live accessibility label and tooltip ("Quiet Lens — overlay on / off / off for this app").
+
+---
+
 ## [1.0.4] — 2026-05-15
 
 **Build 5** · Brand visuals aligned to the **Quiet Apps** design system.

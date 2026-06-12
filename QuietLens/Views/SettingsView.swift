@@ -46,7 +46,13 @@ struct SettingsView: View {
                 let all = SettingsTab.allCases
                 if i >= 0 && i < all.count { withAnimation(FL.M.glass) { selectedTab = all[i] } }
             },
-            onSearch: { searchFocused = true }
+            onSearch: { searchFocused = true },
+            onEscape: {
+                guard !searchText.isEmpty || searchFocused else { return false }
+                searchText = ""
+                searchFocused = false
+                return true
+            }
         ))
     }
 
@@ -177,14 +183,26 @@ struct SettingsView: View {
     private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Group {
-                    switch selectedTab {
-                    case .general: GeneralScreen(search: searchText)
-                    case .appearance: AppearanceScreen(search: searchText)
-                    case .gestures: GestureScreen(search: searchText)
-                    case .rules: RulesScreen(search: searchText)
-                    case .about: AboutScreen()
+                if searchText.isEmpty {
+                    Group {
+                        switch selectedTab {
+                        case .general: GeneralScreen(search: searchText)
+                        case .appearance: AppearanceScreen(search: searchText)
+                        case .gestures: GestureScreen(search: searchText)
+                        case .rules: RulesScreen(search: searchText)
+                        case .about: AboutScreen()
+                        }
                     }
+                } else {
+                    // Search spans every tab, not just the visible one. Each
+                    // screen renders only its matching sections; screens with
+                    // no matches contribute nothing.
+                    PageHeader("Search",
+                               subtitle: "Results across all settings for “\(searchText)”. Press ⎋ to clear.")
+                    GeneralScreen(search: searchText)
+                    AppearanceScreen(search: searchText)
+                    GestureScreen(search: searchText)
+                    RulesScreen(search: searchText)
                 }
             }
             .padding(.horizontal, FL.S.s7)
@@ -198,22 +216,34 @@ struct SettingsView: View {
 struct KeyboardShortcutsCatcher: NSViewRepresentable {
     let onTab: (Int) -> Void
     let onSearch: () -> Void
+    var onEscape: () -> Bool = { false }
     func makeNSView(context: Context) -> NSView {
         let v = CatcherView()
         v.onTab = onTab
         v.onSearch = onSearch
+        v.onEscape = onEscape
         return v
     }
-    func updateNSView(_ nsView: NSView, context: Context) {}
+    func updateNSView(_ nsView: NSView, context: Context) {
+        guard let v = nsView as? CatcherView else { return }
+        v.onTab = onTab
+        v.onSearch = onSearch
+        v.onEscape = onEscape
+    }
     final class CatcherView: NSView {
         var onTab: ((Int) -> Void)?
         var onSearch: (() -> Void)?
+        var onEscape: (() -> Bool)?
         private var monitor: Any?
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
             if monitor == nil {
                 monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-                    guard let self else { return event }
+                    guard let self, event.window === self.window else { return event }
+                    if event.keyCode == 53 { // Escape clears search
+                        if self.onEscape?() == true { return nil }
+                        return event
+                    }
                     if event.modifierFlags.contains(.command), let ch = event.charactersIgnoringModifiers {
                         if let n = Int(ch), n >= 1 && n <= 5 {
                             self.onTab?(n - 1); return nil

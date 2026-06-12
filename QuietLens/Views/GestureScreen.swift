@@ -8,7 +8,9 @@ struct GestureScreen: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            PageHeader("Gestures", subtitle: "Shake, shortcuts, and pointer behavior.")
+            if search.isEmpty {
+                PageHeader("Gestures", subtitle: "Shake, shortcuts, and pointer behavior.")
+            }
 
             if match("shake toggle peek sensitivity modifier hold") {
                 SectionLabel(text: "Shake to Toggle")
@@ -86,8 +88,7 @@ struct GestureScreen: View {
     }
 
     private func match(_ keywords: String) -> Bool {
-        guard !search.isEmpty else { return true }
-        return keywords.lowercased().contains(search.lowercased())
+        settingsSearchMatch(keywords, search: search)
     }
 }
 

@@ -1,24 +1,28 @@
 import SwiftUI
+import AppKit
 
 struct GeneralScreen: View {
     @EnvironmentObject var settings: QuietLensSettings
+    @ObservedObject private var updates = UpdateChecker.shared
     var search: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            PageHeader("General",
-                       subtitle: "How Quiet Lens starts up and lives in your menu bar.")
+            if search.isEmpty {
+                PageHeader("General",
+                           subtitle: "How Quiet Lens starts up and lives in your menu bar.")
 
-            if !settings.onboardingDismissed {
-                Callout(
-                    title: "New to Quiet Lens?",
-                    message: "Set a hotkey in Gestures, then add apps to Rules → Exclude so they stay clear while you work.",
-                    systemImage: "sparkles",
-                    trailing: AnyView(
-                        GhostButton(title: "Got it") { settings.onboardingDismissed = true }
+                if !settings.onboardingDismissed {
+                    Callout(
+                        title: "New to Quiet Lens?",
+                        message: "Set a hotkey in Gestures, then add apps to Rules → Exclude so they stay clear while you work.",
+                        systemImage: "sparkles",
+                        trailing: AnyView(
+                            GhostButton(title: "Got it") { settings.onboardingDismissed = true }
+                        )
                     )
-                )
-                .padding(.bottom, FL.S.s5)
+                    .padding(.bottom, FL.S.s5)
+                }
             }
 
             if match("startup launch login auto enable focus") {
@@ -32,9 +36,8 @@ struct GeneralScreen: View {
 
                     SettingsRow(icon: "bolt",
                                 title: "Auto-enable on focus",
-                                subtitle: "Turn the overlay on the moment you click into any window.",
-                                comingSoon: true,
-                                trailing: { GlassSwitch(isOn: .constant(false)) })
+                                subtitle: "Turn the overlay back on when you switch windows. Pauses after you turn it off manually.",
+                                trailing: { GlassSwitch(isOn: $settings.autoEnableOnFocus) })
                 }
             }
 
@@ -58,15 +61,14 @@ struct GeneralScreen: View {
                 }
             }
 
-            if match("icloud sync settings cross") {
+            if match("icloud sync settings cross macs") {
                 SectionLabel(text: "Sync")
                 GlassPanel {
                     SettingsRow(icon: "icloud",
                                 title: "iCloud Settings Sync",
-                                subtitle: "Mirror your overlay configuration across Macs.",
+                                subtitle: "Mirror your overlay configuration across Macs. Active on builds signed with the iCloud entitlement.",
                                 isFirst: true,
-                                comingSoon: true,
-                                trailing: { GlassSwitch(isOn: .constant(false)) })
+                                trailing: { GlassSwitch(isOn: $settings.iCloudSyncEnabled) })
                 }
             }
 
@@ -85,22 +87,44 @@ struct GeneralScreen: View {
                 }
             }
 
-            if match("updates check version") {
+            if match("updates check version release new") {
                 SectionLabel(text: "Updates")
                 GlassPanel {
                     SettingsRow(icon: "arrow.down.circle",
                                 title: "Check for Updates",
-                                subtitle: "You're on version 1.0.3.",
+                                subtitle: updatesSubtitle,
                                 isFirst: true,
-                                comingSoon: true,
-                                trailing: { GhostButton(title: "Check now") {} })
+                                trailing: { updatesTrailing })
                 }
             }
         }
     }
 
+    private var updatesSubtitle: String {
+        switch updates.state {
+        case .idle: return "You're on version \(updates.currentVersion)."
+        case .checking: return "Checking the latest release on GitHub…"
+        case .upToDate: return "You're up to date (\(updates.currentVersion))."
+        case .available(let v, _): return "Version \(v) is available — you're on \(updates.currentVersion)."
+        case .failed: return "Couldn't reach GitHub. Check your connection and try again."
+        }
+    }
+
+    @ViewBuilder
+    private var updatesTrailing: some View {
+        switch updates.state {
+        case .checking:
+            ProgressView().controlSize(.small)
+        case .available(_, let url):
+            PrimaryButton(title: "View Release", icon: "arrow.up.right") {
+                NSWorkspace.shared.open(url)
+            }
+        default:
+            GhostButton(title: "Check now") { updates.check() }
+        }
+    }
+
     private func match(_ keywords: String) -> Bool {
-        guard !search.isEmpty else { return true }
-        return keywords.lowercased().contains(search.lowercased())
+        settingsSearchMatch(keywords, search: search)
     }
 }

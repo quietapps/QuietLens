@@ -272,6 +272,7 @@ final class QuietLensSettings: ObservableObject {
         shakeEnabled = d.object(forKey: "shakeEnabled") as? Bool ?? true
         shakeSensitivity = d.object(forKey: "shakeSensitivity") as? Double ?? 0.5
         shakeModifier = ShakeModifier(rawValue: d.string(forKey: "shakeModifier") ?? "") ?? .none
+        onboardingDismissed = d.bool(forKey: "onboardingDismissed")
         excludedBundleIDs = d.stringArray(forKey: "excludedBundleIDs") ?? excludedBundleIDs
         pinnedBundleIDs = d.stringArray(forKey: "pinnedBundleIDs") ?? []
         highlightSameAppWindows = d.bool(forKey: "highlightSameAppWindows")

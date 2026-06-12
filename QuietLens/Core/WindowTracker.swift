@@ -12,23 +12,52 @@ struct FocusedWindowInfo: Equatable {
 @MainActor
 final class WindowTracker {
     var onFocusedWindowChanged: ((FocusedWindowInfo?) -> Void)?
+    /// Fires when the focused window is being moved or resized (AX
+    /// kAXWindowMoved / kAXWindowResized). Used to hide the overlay only
+    /// during real window drags instead of on every mouse drag.
+    var onWindowGeometryChanged: (() -> Void)?
     private(set) var currentApp: NSRunningApplication?
     private var axObserver: AXObserver?
     private var axApp: AXUIElement?
     private var observedPID: pid_t = 0
     private var pollTimer: Timer?
     private var lastInfo: FocusedWindowInfo?
+    private var startedTracking = false
+    private var pollingDesired = false
 
     func start() {
+        guard !startedTracking else { return }
+        startedTracking = true
         let nc = NSWorkspace.shared.notificationCenter
         nc.addObserver(self, selector: #selector(activeAppChanged(_:)),
                        name: NSWorkspace.didActivateApplicationNotification, object: nil)
         nc.addObserver(self, selector: #selector(activeAppChanged(_:)),
                        name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
         attachToFrontmost()
-        pollTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        if pollingDesired { startPollTimer() }
+    }
+
+    /// The 0.5s poll is only a fallback for AX events the observer misses.
+    /// It costs an AX round-trip + CGWindowList scan per tick, so it runs
+    /// only while the overlay is enabled.
+    func setPollingEnabled(_ on: Bool) {
+        pollingDesired = on
+        guard startedTracking else { return }
+        if on {
+            startPollTimer()
+        } else {
+            pollTimer?.invalidate()
+            pollTimer = nil
+        }
+    }
+
+    private func startPollTimer() {
+        guard pollTimer == nil else { return }
+        let t = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
         }
+        t.tolerance = 0.1
+        pollTimer = t
     }
 
     @objc private func activeAppChanged(_ note: Notification) {
@@ -51,10 +80,15 @@ final class WindowTracker {
         if let app = axApp { AXUIElementSetMessagingTimeout(app, 0.4) }
         observedPID = pid
         var obs: AXObserver?
-        let cb: AXObserverCallback = { _, _, _, refcon in
+        let cb: AXObserverCallback = { _, _, notification, refcon in
             guard let refcon else { return }
             let me = Unmanaged<WindowTracker>.fromOpaque(refcon).takeUnretainedValue()
-            Task { @MainActor in me.refresh() }
+            let name = notification as String
+            let isGeometry = name == kAXWindowMovedNotification || name == kAXWindowResizedNotification
+            Task { @MainActor in
+                if isGeometry { me.onWindowGeometryChanged?() }
+                me.refresh()
+            }
         }
         if AXObserverCreate(pid, cb, &obs) == .success, let obs {
             let refcon = Unmanaged.passUnretained(self).toOpaque()

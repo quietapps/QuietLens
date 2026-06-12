@@ -3,6 +3,7 @@ import SwiftUI
 struct LivePreview: View {
     @EnvironmentObject var settings: QuietLensSettings
     @Environment(\.colorScheme) var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var breathScale: CGFloat = 1.0
     @State private var breathOpacity: CGFloat = 1.0
@@ -133,6 +134,7 @@ struct LivePreview: View {
             driftX = 0
             driftY = 0
         }
+        guard !reduceMotion else { return }
         switch settings.shaderMode {
         case .staticMode:
             return

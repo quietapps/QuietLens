@@ -9,7 +9,9 @@ struct RulesScreen: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            PageHeader("Rules", subtitle: "Per-app behavior and automatic states.")
+            if search.isEmpty {
+                PageHeader("Rules", subtitle: "Per-app behavior and automatic states.")
+            }
 
             if match("exclude excluded apps disable") {
                 SectionLabel(text: "Excluded Apps")
@@ -85,8 +87,7 @@ struct RulesScreen: View {
                     SettingsRow(icon: "menubar.rectangle", title: "Blur menu bar while focused",
                                 trailing: { GlassSwitch(isOn: $settings.autoHideMenuBar) })
                     SettingsRow(icon: "timer", title: "Auto-disable after",
-                                subtitle: "Turn the overlay off after this idle period.",
-                                comingSoon: true,
+                                subtitle: "Turn the overlay off automatically after it has been on this long.",
                                 trailing: {
                         GlassPicker(selection: $settings.autoDisableAfter,
                                     items: AutoDisableAfter.allCases,
@@ -170,8 +171,7 @@ struct RulesScreen: View {
     }
 
     private func match(_ keywords: String) -> Bool {
-        guard !search.isEmpty else { return true }
-        return keywords.lowercased().contains(search.lowercased())
+        settingsSearchMatch(keywords, search: search)
     }
 }
 

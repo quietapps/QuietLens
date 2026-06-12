@@ -1,6 +1,19 @@
 import SwiftUI
 import AppKit
 
+// MARK: - Settings search
+
+/// Token match: every whitespace-separated token typed in the search field
+/// must appear somewhere in the keyword string. "blur dock" matches a section
+/// whose keywords contain both words anywhere, not just as one phrase.
+func settingsSearchMatch(_ keywords: String, search: String) -> Bool {
+    guard !search.isEmpty else { return true }
+    let hay = keywords.lowercased()
+    return search.lowercased()
+        .split(whereSeparator: { $0.isWhitespace })
+        .allSatisfy { hay.contains($0) }
+}
+
 // MARK: - Visual Effect Backgrounds
 
 struct GlassMaterial: NSViewRepresentable {
@@ -258,6 +271,10 @@ struct SettingsRow<Trailing: View, Below: View>: View {
                     .padding(.bottom, FL.S.s3)
             }
         }
+        // Rows without extra below-content read as one VoiceOver element
+        // ("Launch at Login, …, On, button"). Rows with a slider below keep
+        // their children separate so the slider's adjustable action works.
+        .accessibilityElement(children: below is EmptyView ? .combine : .contain)
     }
 }
 
@@ -307,6 +324,7 @@ struct GlassSwitch: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .accessibilityValue(isOn ? "On" : "Off")
     }
 }
 
@@ -316,6 +334,7 @@ struct GlassSlider: View {
     @Binding var value: Double
     let range: ClosedRange<Double>
     var step: Double? = nil
+    var a11yLabel: String = "Slider"
     @Environment(\.colorScheme) var scheme
     @State private var isDragging = false
 
@@ -357,6 +376,22 @@ struct GlassSlider: View {
             )
         }
         .frame(height: 22)
+        .accessibilityElement()
+        .accessibilityLabel(a11yLabel)
+        .accessibilityValue("\(Int(round(normalized * 100))) percent")
+        .accessibilityAdjustableAction { direction in
+            let delta = step ?? (range.upperBound - range.lowerBound) / 20
+            switch direction {
+            case .increment: value = min(range.upperBound, value + delta)
+            case .decrement: value = max(range.lowerBound, value - delta)
+            @unknown default: break
+            }
+        }
+    }
+
+    private var normalized: Double {
+        let span = max(0.0001, range.upperBound - range.lowerBound)
+        return min(1, max(0, (value - range.lowerBound) / span))
     }
 
     private func updateValue(at x: CGFloat, width w: CGFloat) {
@@ -412,6 +447,7 @@ struct GlassSegmented<T: Hashable & Identifiable>: View {
                         .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(isSel ? [.isSelected] : [])
             }
         }
         .padding(3)
@@ -573,6 +609,7 @@ struct ColorSwatch: View {
     let color: Color
     let isSelected: Bool
     var rainbow: Bool = false
+    var label: String? = nil
     var action: () -> Void
     @Environment(\.colorScheme) var scheme
     var body: some View {
@@ -600,6 +637,8 @@ struct ColorSwatch: View {
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label ?? (rainbow ? "System accent color" : "Color swatch"))
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }
 

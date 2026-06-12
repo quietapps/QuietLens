@@ -118,7 +118,12 @@ final class BlurOverlayView: NSView {
         }
 
         if settings.grainIntensity > 0.01 {
-            if grainLayer.contents == nil { grainLayer.contents = Self.grainImage() }
+            if grainLayer.contents == nil {
+                Self.grainImage { [weak self] img in
+                    guard let self, let img else { return }
+                    self.grainLayer.contents = img
+                }
+            }
             grainLayer.contentsGravity = .resize
             grainLayer.magnificationFilter = .nearest
             grainLayer.minificationFilter = .nearest
@@ -146,6 +151,7 @@ final class BlurOverlayView: NSView {
         layer?.removeAnimation(forKey: "shader")
         layer?.opacity = 1
         layer?.transform = CATransform3DIdentity
+        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
         let s = max(0.1, speed)
         switch mode {
         case .staticMode:
@@ -215,29 +221,50 @@ final class BlurOverlayView: NSView {
         }
     }
 
+    // Grain generation used to run synchronously on the main thread with
+    // 16M Swift RNG calls (~hundreds of ms hang the first time grain was
+    // enabled). It now fills the noise planes with arc4random_buf on a
+    // background queue and applies the result on the main thread.
     private static var cachedGrain: CGImage?
-    static func grainImage() -> CGImage? {
-        if let g = cachedGrain { return g }
+    private static var grainCallbacks: [(CGImage?) -> Void] = []
+
+    /// Main-thread only. Calls back on the main thread with the cached or
+    /// freshly generated grain texture.
+    static func grainImage(_ completion: @escaping (CGImage?) -> Void) {
+        if let g = cachedGrain { completion(g); return }
+        grainCallbacks.append(completion)
+        guard grainCallbacks.count == 1 else { return }
+        DispatchQueue.global(qos: .utility).async {
+            let img = makeGrain()
+            DispatchQueue.main.async {
+                cachedGrain = img
+                let cbs = grainCallbacks
+                grainCallbacks = []
+                cbs.forEach { $0(img) }
+            }
+        }
+    }
+
+    private static func makeGrain() -> CGImage? {
         let w = 2048, h = 2048
         let cs = CGColorSpaceCreateDeviceRGB()
         let bpr = w * 4
         guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8,
                                   bytesPerRow: bpr, space: cs,
                                   bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        var noiseA = [UInt8](repeating: 0, count: w * h)
+        var noiseB = [UInt8](repeating: 0, count: w * h)
+        arc4random_buf(&noiseA, noiseA.count)
+        arc4random_buf(&noiseB, noiseB.count)
         let buf = ctx.data!.assumingMemoryBound(to: UInt8.self)
         for i in 0..<(w * h) {
-            let a = Int(UInt8.random(in: 0...255))
-            let b = Int(UInt8.random(in: 0...255))
-            let c = Int(UInt8.random(in: 0...255))
-            let d = Int(UInt8.random(in: 0...255))
-            let avg = (a + b + c + d) / 4
-            let v = UInt8(96 + (avg - 128) * 80 / 128 + 64)
+            let avg = (Int(noiseA[i]) + Int(noiseB[i])) / 2
+            let v = UInt8(clamping: 96 + (avg - 128) * 80 / 128 + 64)
             buf[i * 4 + 0] = v
             buf[i * 4 + 1] = v
             buf[i * 4 + 2] = v
             buf[i * 4 + 3] = 255
         }
-        cachedGrain = ctx.makeImage()
-        return cachedGrain
+        return ctx.makeImage()
     }
 }

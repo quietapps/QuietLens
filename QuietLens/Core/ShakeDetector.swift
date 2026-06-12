@@ -7,12 +7,10 @@ final class ShakeDetector {
     var onPeekEnd: (() -> Void)?
 
     private let settings: QuietLensSettings
-    private var timer: Timer?
-    private var flagsMonitor: Any?
+    private var monitors: [Any] = []
+    private var started = false
     private var samples: [(t: TimeInterval, p: CGPoint)] = []
-    private var reversals: Int = 0
-    private var lastDir: Int = 0
-    private var firstReversalTime: TimeInterval = 0
+    private var lastSampleTime: TimeInterval = 0
     private var lastTriggerTime: TimeInterval = 0
     private var currentFlags: NSEvent.ModifierFlags = []
     private var peeking: Bool = false
@@ -21,29 +19,46 @@ final class ShakeDetector {
     init(settings: QuietLensSettings) { self.settings = settings }
 
     func start() {
-        guard timer == nil else { return }
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.tick() }
-        }
-        flagsMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] ev in
-            Task { @MainActor in self?.currentFlags = ev.modifierFlags }
-        }
-        NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] ev in
-            Task { @MainActor in self?.currentFlags = ev.modifierFlags }
+        guard !started else { return }
+        started = true
+        // Event-driven sampling instead of a 60 Hz polling timer: zero CPU
+        // while the pointer is idle. Global monitors cover other apps; local
+        // monitors cover our own windows (global monitors skip the active app).
+        // Mouse-move global monitors need no extra TCC permission.
+        let moveEvents: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged, .rightMouseDragged, .otherMouseDragged]
+        if let m = NSEvent.addGlobalMonitorForEvents(matching: moveEvents, handler: { [weak self] _ in
+            Task { @MainActor in self?.sample() }
+        }) { monitors.append(m) }
+        if let m = NSEvent.addLocalMonitorForEvents(matching: moveEvents, handler: { [weak self] ev in
+            Task { @MainActor in self?.sample() }
             return ev
-        }
+        }) { monitors.append(m) }
+        if let m = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged, handler: { [weak self] ev in
+            let flags = ev.modifierFlags
+            Task { @MainActor in self?.currentFlags = flags }
+        }) { monitors.append(m) }
+        if let m = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: { [weak self] ev in
+            let flags = ev.modifierFlags
+            Task { @MainActor in self?.currentFlags = flags }
+            return ev
+        }) { monitors.append(m) }
     }
 
-    private func tick() {
-        guard settings.shakeEnabled else { reset(); return }
+    private func sample() {
+        guard settings.shakeEnabled else {
+            if !samples.isEmpty { reset() }
+            return
+        }
         let modifierWanted = settings.shakeModifier.flags
         if !modifierWanted.isEmpty && !currentFlags.contains(modifierWanted) {
-            reset()
+            if !samples.isEmpty { reset() }
             return
         }
         let now = Date().timeIntervalSinceReferenceDate
-        let loc = NSEvent.mouseLocation
-        samples.append((now, loc))
+        // Cap the sampling rate so high-report-rate mice don't burn CPU.
+        if now - lastSampleTime < 0.008 { return }
+        lastSampleTime = now
+        samples.append((now, NSEvent.mouseLocation))
         samples.removeAll { now - $0.t > 0.6 }
         guard samples.count >= 3 else { return }
 
@@ -98,7 +113,5 @@ final class ShakeDetector {
 
     private func reset() {
         samples.removeAll()
-        reversals = 0
-        lastDir = 0
     }
 }

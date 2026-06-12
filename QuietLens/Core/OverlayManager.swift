@@ -8,6 +8,14 @@ final class OverlayManager {
     private var isExcluded: Bool = false
     private var isPeeking: Bool = false
     private var isDragging: Bool = false
+    private var mouseButtonDown = false
+    private var dragEndFailsafe: DispatchWorkItem?
+
+    /// Fired whenever isEnabled flips, regardless of who flipped it (menu,
+    /// hotkey, shake, URL automation, auto-disable). Lets AppDelegate keep
+    /// the status icon, auto-hide state and tracker polling in sync from a
+    /// single place.
+    var onEnabledChanged: ((Bool) -> Void)?
 
     private var windows: [CGDirectDisplayID: OverlayWindow] = [:]
     private let settings: QuietLensSettings
@@ -22,12 +30,14 @@ final class OverlayManager {
     }
 
     func setEnabled(_ on: Bool, animated: Bool) {
+        let changed = isEnabled != on
         isEnabled = on
         if on {
             isDragging = false
             isPeeking = false
         }
         updateVisibility(animated: animated)
+        if changed { onEnabledChanged?(on) }
     }
 
     func setExcluded(_ ex: Bool, animated: Bool) {
@@ -80,12 +90,46 @@ final class OverlayManager {
     }
 
     private func observeDrag() {
-        NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDragged]) { [weak self] _ in
-            Task { @MainActor in self?.setDragging(true) }
+        // Only track the button state here. The overlay hides during real
+        // window drags — AX move/resize while the button is down, reported
+        // via noteWindowGeometryChanging() — not on every left-drag.
+        // Hiding on any drag made the overlay flicker during plain text
+        // selection in the focused window.
+        NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown]) { [weak self] _ in
+            Task { @MainActor in self?.mouseButtonDown = true }
         }
         NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseUp]) { [weak self] _ in
+            Task { @MainActor in self?.endDrag() }
+        }
+        NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown]) { [weak self] ev in
+            Task { @MainActor in self?.mouseButtonDown = true }
+            return ev
+        }
+        NSEvent.addLocalMonitorForEvents(matching: [.leftMouseUp]) { [weak self] ev in
+            Task { @MainActor in self?.endDrag() }
+            return ev
+        }
+    }
+
+    /// Called by WindowTracker on kAXWindowMoved / kAXWindowResized.
+    func noteWindowGeometryChanging() {
+        guard mouseButtonDown else { return }
+        setDragging(true)
+        // Failsafe: if the matching mouseUp never arrives (secure input,
+        // missed event), un-hide once geometry events stop for a second.
+        dragEndFailsafe?.cancel()
+        let w = DispatchWorkItem { [weak self] in
             Task { @MainActor in self?.setDragging(false) }
         }
+        dragEndFailsafe = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: w)
+    }
+
+    private func endDrag() {
+        mouseButtonDown = false
+        dragEndFailsafe?.cancel()
+        dragEndFailsafe = nil
+        setDragging(false)
     }
 
     private func setDragging(_ d: Bool) {

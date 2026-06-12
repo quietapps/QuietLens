@@ -9,15 +9,15 @@ final class iCloudSync {
     // build is unsigned) emits a noisy "BUG IN CLIENT OF KVS" warning and
     // does nothing useful. Lazy + gated by the user toggle.
     private var _store: NSUbiquitousKeyValueStore?
-    private var storeAttempted = false
     private var store: NSUbiquitousKeyValueStore? {
-        if storeAttempted { return _store }
-        storeAttempted = true
+        if let s = _store { return s }
         // Don't touch NSUbiquitousKeyValueStore.default unless the build
         // actually has the ubiquity-kvstore entitlement AND the user has
         // opted in. Otherwise AppKit logs:
         //   "BUG IN CLIENT OF KVS: Trying to initialize
         //    NSUbiquitousKeyValueStore without a store identifier."
+        // Re-evaluated on each access (not latched) so flipping the toggle
+        // on later in the session still brings sync up.
         guard QuietLensSettings.shared.iCloudSyncEnabled,
               iCloudSync.hasEntitlement else { return nil }
         _store = NSUbiquitousKeyValueStore.default
@@ -51,8 +51,8 @@ final class iCloudSync {
 
     func start() {
         guard !started else { return }
-        started = true
         guard let store else { return }
+        started = true
         NotificationCenter.default.addObserver(
             self, selector: #selector(externalChange),
             name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
@@ -66,6 +66,9 @@ final class iCloudSync {
         guard QuietLensSettings.shared.iCloudSyncEnabled else { return }
         guard !suppressPush else { return }
         guard let store else { return }
+        // First push after the toggle was flipped on mid-session: bring the
+        // observer + initial pull up before pushing local state.
+        if !started { start() }
         for k in keys {
             if let v = defaults.object(forKey: k) {
                 store.set(v, forKey: k)

@@ -29,15 +29,17 @@ struct AppearanceScreen: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            PageHeader("Appearance",
-                       subtitle: "Tune how the overlay looks and moves.") {
-                GhostButton(title: "Reset", icon: "arrow.counterclockwise") { resetAppearance() }
-            }
+            if search.isEmpty {
+                PageHeader("Appearance",
+                           subtitle: "Tune how the overlay looks and moves.") {
+                    GhostButton(title: "Reset", icon: "arrow.counterclockwise") { resetAppearance() }
+                }
 
-            // Live preview
-            LivePreview()
-                .frame(height: 200)
-                .padding(.bottom, FL.S.s5)
+                // Live preview
+                LivePreview()
+                    .frame(height: 200)
+                    .padding(.bottom, FL.S.s5)
+            }
 
             if match("mode deep ambient tinted") {
                 SectionLabel(text: "Mode")
@@ -61,7 +63,7 @@ struct AppearanceScreen: View {
                             .foregroundStyle(FL.C.text2(scheme))
                     },
                                 below: {
-                        GlassSlider(value: $settings.blurRadius, range: 0...60)
+                        GlassSlider(value: $settings.blurRadius, range: 0...60, a11yLabel: "Blur radius")
                             .padding(.top, 6)
                     })
 
@@ -72,7 +74,7 @@ struct AppearanceScreen: View {
                             .foregroundStyle(FL.C.text2(scheme))
                     },
                                 below: {
-                        GlassSlider(value: $settings.overlayOpacity, range: 0.1...1.0)
+                        GlassSlider(value: $settings.overlayOpacity, range: 0.1...1.0, a11yLabel: "Overlay opacity")
                             .padding(.top, 6)
                     })
                 }
@@ -101,7 +103,8 @@ struct AppearanceScreen: View {
                             }
                             ForEach(APPEARANCE_TINTS, id: \.hex) { t in
                                 ColorSwatch(color: Color(hex: t.hex) ?? .black,
-                                            isSelected: !settings.useSystemTint && settings.tintColorHex.uppercased() == t.hex.uppercased()) {
+                                            isSelected: !settings.useSystemTint && settings.tintColorHex.uppercased() == t.hex.uppercased(),
+                                            label: t.label) {
                                     settings.useSystemTint = false
                                     settings.tintColorHex = t.hex
                                 }
@@ -121,7 +124,8 @@ struct AppearanceScreen: View {
                             HStack(spacing: 6) {
                                 ForEach(APPEARANCE_TINTS.prefix(7), id: \.hex) { t in
                                     ColorSwatch(color: Color(hex: t.hex) ?? .black,
-                                                isSelected: settings.tintColor2Hex.uppercased() == t.hex.uppercased()) {
+                                                isSelected: settings.tintColor2Hex.uppercased() == t.hex.uppercased(),
+                                                label: t.label) {
                                         settings.tintColor2Hex = t.hex
                                     }
                                 }
@@ -134,7 +138,7 @@ struct AppearanceScreen: View {
                                 .font(FL.T.mono()).foregroundStyle(FL.C.text2(scheme))
                         },
                                     below: {
-                            GlassSlider(value: $settings.gradientAngle, range: 0...360)
+                            GlassSlider(value: $settings.gradientAngle, range: 0...360, a11yLabel: "Gradient angle")
                                 .padding(.top, 6)
                         })
                     }
@@ -150,7 +154,7 @@ struct AppearanceScreen: View {
                             .font(FL.T.mono()).foregroundStyle(FL.C.text2(scheme))
                     },
                                 below: {
-                        GlassSlider(value: $settings.grainIntensity, range: 0...1)
+                        GlassSlider(value: $settings.grainIntensity, range: 0...1, a11yLabel: "Film grain")
                             .padding(.top, 6)
                     })
 
@@ -181,7 +185,7 @@ struct AppearanceScreen: View {
                                 .font(FL.T.mono()).foregroundStyle(FL.C.text2(scheme))
                         },
                                     below: {
-                            GlassSlider(value: $settings.animationSpeed, range: 0.25...3.0)
+                            GlassSlider(value: $settings.animationSpeed, range: 0.25...3.0, a11yLabel: "Animation speed")
                                 .padding(.top, 6)
                         })
                     }
@@ -204,7 +208,7 @@ struct AppearanceScreen: View {
                                 .font(FL.T.mono()).foregroundStyle(FL.C.text2(scheme))
                         },
                                     below: {
-                            GlassSlider(value: $settings.edgeGlowRadius, range: 2...30)
+                            GlassSlider(value: $settings.edgeGlowRadius, range: 2...30, a11yLabel: "Halo intensity")
                                 .padding(.top, 6)
                         })
                     }
@@ -248,7 +252,7 @@ struct AppearanceScreen: View {
                             .font(FL.T.mono()).foregroundStyle(FL.C.text2(scheme))
                     },
                                 below: {
-                        GlassSlider(value: $settings.fadeDuration, range: 0.05...1.0)
+                        GlassSlider(value: $settings.fadeDuration, range: 0.05...1.0, a11yLabel: "Fade duration")
                             .padding(.top, 6)
                     })
                 }
@@ -286,8 +290,7 @@ struct AppearanceScreen: View {
     }
 
     private func match(_ keywords: String) -> Bool {
-        guard !search.isEmpty else { return true }
-        return keywords.lowercased().contains(search.lowercased())
+        settingsSearchMatch(keywords, search: search)
     }
 
     private func resetAppearance() {
