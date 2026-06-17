@@ -1,6 +1,6 @@
 cask "quietlens" do
-  version "1.0.7"
-  sha256 "46e98edcaf2939278b76b43172149f38fc6c069d825644ec6025a0839fc021c3"
+  version "1.0.8"
+  sha256 :no_check  # set by scripts/release.sh output
 
   url "https://github.com/quietapps/QuietLens/releases/download/#{version}/QuietLens-#{version}.zip",
       verified: "github.com/quietapps/QuietLens/"

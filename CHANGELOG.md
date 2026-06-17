@@ -4,6 +4,15 @@ All notable changes to Quiet Lens are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] — 2026-06-17
+
+**Build 8** · App icon refresh.
+
+### Changed
+- **App icon** updated to match the Quiet Apps icon standard for macOS 26 Tahoe — correct squircle shape, transparent outer padding, and proper canvas sizing so the icon appears correctly in the Dock and Launchpad.
+
+---
+
 ## [1.0.7] — 2026-06-11
 
 **Build 7** · Stability, performance, and accessibility overhaul — one crash fix, event-driven input tracking, working auto-disable/auto-enable/update-check, global settings search.
